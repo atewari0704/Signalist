@@ -2,7 +2,33 @@
 
 import { auth } from "@/lib/better-auth/auth";
 import { inngest } from "@/lib/inngest/client";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
+
+
+export const signOut = async () => {
+    try {
+        await auth.api.signOut({ headers: await headers() });
+        return { success: true, message: 'Sign out successful' }
+    } catch (e) {
+        console.log('Sign out failed', e)
+        return { success: false, message: 'Sign out failed' }
+    }
+}
+
+
+export const signInWithEmail = async({email, password}: SignInFormData) => {
+    try{
+    const response = await auth.api.signInEmail( { body: { email, password } });
+    if(response) return { success: true, data: response };
+    return {success: false, message: 'Sign in failed'};
+
+    } catch(e){
+        console.error(e);
+        return { success: false, message: 'Sign in failed' };
+    }
+}
 
 
 export const signUpWithEmail = async ({fullName, email, password, country, investmentGoals, riskTolerance, preferredIndustry}: SignUpFormData) => {
