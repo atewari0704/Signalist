@@ -6,6 +6,7 @@ import InputField from '@/components/forms/InputField';
 import FooterLink from '@/components/forms/FooterLink';
 import { signInWithEmail } from '@/lib/actions/auth.actions';
 import {useRouter} from "next/navigation";
+import { toast } from 'sonner';
 
 const SignIn = () => {
     const router = useRouter();
@@ -27,11 +28,9 @@ const SignIn = () => {
             if(result.success) router.push('/'); //go to homepage after successful sign in
         } catch (e) {
             console.error(e);
+            toast.error('Sign in failed')
         }
     };
-
-
-
 
     return (
         <>

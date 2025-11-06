@@ -24,7 +24,6 @@ const Layout = async({ children }: { children : React.ReactNode }) => {
             <h2 className="text-white"> Email: {session?.user.email} </h2>
             <h2 className="text-white"> ID: {session?.user.id} </h2>
 
-
             <div className="container py-10">
                 {children}
             </div>
