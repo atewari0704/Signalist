@@ -19,11 +19,6 @@ const Layout = async({ children }: { children : React.ReactNode }) => {
     return (
         <main className="min-h-screen text-gray-400">
             <Header user= {user} />
-
-            <h2 className="text-white"> User: {session?.user.name} </h2>
-            <h2 className="text-white"> Email: {session?.user.email} </h2>
-            <h2 className="text-white"> ID: {session?.user.id} </h2>
-
             <div className="container py-10">
                 {children}
             </div>

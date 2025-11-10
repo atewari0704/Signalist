@@ -37,6 +37,23 @@ export const CONDITION_OPTIONS = [
 ];
 
 // TradingView Charts
+
+export const TICKER_TAPE_WIDGET_CONFIG = {
+    symbols: [
+        { proName: 'FOREXCOM:SPXUSD', title: 'S&P 500 Index' },
+        { proName: 'FOREXCOM:NSXUSD', title: 'US 100 Cash CFD' },
+        { proName: 'FX_IDC:EURUSD', title: 'EUR to USD' },
+        { proName: 'BITSTAMP:BTCUSD', title: 'Bitcoin' },
+        { proName: 'BITSTAMP:ETHUSD', title: 'Ethereum' },
+    ],
+    colorTheme: 'dark',
+    locale: 'en',
+    largeChartUrl: '',
+    isTransparent: true,
+    showSymbolLogo: true,
+    displayMode: 'adaptive',
+};
+
 export const MARKET_OVERVIEW_WIDGET_CONFIG = {
     colorTheme: 'dark', // dark mode
     dateRange: '12M', // last 12 months

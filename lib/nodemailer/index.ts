@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
-import { WELCOME_EMAIL_TEMPLATE } from "./templates";
+import { WELCOME_EMAIL_TEMPLATE, NEWS_SUMMARY_EMAIL_TEMPLATE } from "./templates";
+import { getFormattedTodayDate } from "@/lib/utils";
 
 // Create a test account or replace with real credentials.
 const transporter = nodemailer.createTransport({
@@ -23,4 +24,23 @@ export const sendWelcomeEmail = async ({ email, name, intro }: WelcomeEmailData)
       }
     
     await transporter.sendMail(mailOptions);
+}
+
+
+export const sendNewsSummaryEmail = async ({ user, newsContent }: { user: User; newsContent: string | null}) => {
+
+  const html = NEWS_SUMMARY_EMAIL_TEMPLATE
+  .replace('{{date}}', getFormattedTodayDate())
+  .replace('{{newsContent}}', newsContent || 'No market news.');
+
+
+  const mailOptions = {
+      from: '"Signalist" <signalist@gmail.com>', // sender address
+      to: user.email, // list of receivers
+      subject: "Your Daily Market News Summary", // Subject line
+      text: "Hi " + user.name + ", here's your daily market news summary.", // plain text body
+      html: html, // html body
+    }
+
+  await transporter.sendMail(mailOptions);
 }
