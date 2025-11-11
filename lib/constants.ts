@@ -38,6 +38,32 @@ export const CONDITION_OPTIONS = [
 
 // TradingView Charts
 
+export const SYMBOL_INFO_WIDGET_CONFIG = {
+    symbol: 'NASDAQ:AAPL',
+    colorTheme: 'dark',
+    isTransparent: false,
+    locale: 'en',
+    width: '550',
+    height: '600',
+}
+
+
+
+
+export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = {
+"colorTheme": "dark",
+"displayMode": "single",
+"isTransparent": false,
+"locale": "en",
+"interval": "1m",
+"disableInterval": false,
+"width": 425,
+"height": 450,
+"symbol": "NASDAQ:AAPL",
+"showIntervalTabs": true
+}
+
+
 export const TICKER_TAPE_WIDGET_CONFIG = {
     symbols: [
         { proName: 'FOREXCOM:SPXUSD', title: 'S&P 500 Index' },
