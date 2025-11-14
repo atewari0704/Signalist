@@ -1,7 +1,7 @@
 export const NAV_ITEMS = [
     { href: '/', label: 'Dashboard' },
     { href: '/search', label: 'Search' },
-    { href: '/watchlist', label: 'Watchlist' },
+    // { href: '/watchlist', label: 'Watchlist' },
 ];
 
 // Sign-up form select options
@@ -38,30 +38,72 @@ export const CONDITION_OPTIONS = [
 
 // TradingView Charts
 
-export const SYMBOL_INFO_WIDGET_CONFIG = {
-    symbol: 'NASDAQ:AAPL',
+export const SYMBOL_INFO_WIDGET_CONFIG = (symbol: string) => ({
+    symbol,
     colorTheme: 'dark',
-    isTransparent: false,
+    isTransparent: true,
     locale: 'en',
-    width: '550',
-    height: '600',
-}
+    width: '100%',
+    height: '220',
+    showIntervalTabs: true,
+});
 
+export const ADVANCED_CHART_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
+    symbol,
+    autosize: false,
+    width: '100%',
+    height: 600,
+    interval: '60',
+    timezone: 'Etc/UTC',
+    theme: 'dark',
+    style: '1',
+    locale: 'en',
+    allow_symbol_change: true,
+    hide_side_toolbar: false,
+    withdateranges: true,
+    details: true,
+    calendar: false,
+    support_host: 'https://www.tradingview.com',
+});
 
+export const ADVANCED_LINE_CHART_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
+    ...ADVANCED_CHART_WIDGET_CONFIG(symbol),
+    chartType: 'line',
+    style: '3',
+    height: 600,
+});
 
+export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
+    symbol,
+    colorTheme: 'dark',
+    displayMode: 'single',
+    isTransparent: true,
+    locale: 'en',
+    interval: '1m',
+    disableInterval: false,
+    width: '100%',
+    height: 450,
+    showIntervalTabs: true,
+});
 
-export const TECHNICAL_ANALYSIS_WIDGET_CONFIG = {
-"colorTheme": "dark",
-"displayMode": "single",
-"isTransparent": false,
-"locale": "en",
-"interval": "1m",
-"disableInterval": false,
-"width": 425,
-"height": 450,
-"symbol": "NASDAQ:AAPL",
-"showIntervalTabs": true
-}
+export const SYMBOL_PROFILE_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
+    symbol,
+    colorTheme: 'dark',
+    isTransparent: true,
+    locale: 'en',
+    width: '100%',
+    height: 450,
+});
+
+export const FINANCIALS_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
+    symbol,
+    colorTheme: 'dark',
+    isTransparent: true,
+    locale: 'en',
+    displayMode: 'regular',
+    width: '100%',
+    height: 540,
+});
 
 
 export const TICKER_TAPE_WIDGET_CONFIG = {
