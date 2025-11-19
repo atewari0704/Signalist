@@ -53,3 +53,68 @@ export const getWatchlistSymbolsByEmail = async (email: string): Promise<string[
     }
 };
 
+type ModifyWatchlistParams = {
+    userId: string;
+    symbol: string;
+};
+
+type AddToWatchlistParams = ModifyWatchlistParams & {
+    company: string;
+};
+
+export const isStockInWatchlist = async ({ userId, symbol }: ModifyWatchlistParams): Promise<boolean> => {
+    const trimmedSymbol = symbol?.trim().toUpperCase();
+
+    if (!userId || !trimmedSymbol) {
+        return false;
+    }
+
+    await connectToDatabase();
+
+    const existing = await Watchlist.exists({ userId, symbol: trimmedSymbol });
+
+    return Boolean(existing);
+};
+
+export const addStockToWatchlist = async ({
+    userId,
+    symbol,
+    company,
+}: AddToWatchlistParams) => {
+    const trimmedSymbol = symbol?.trim().toUpperCase();
+    const trimmedCompany = company?.trim();
+
+    if (!trimmedSymbol) {
+        throw new Error('Symbol is required');
+    }
+
+    if (!trimmedCompany) {
+        throw new Error('Company name is required');
+    }
+
+    await connectToDatabase();
+
+    await Watchlist.findOneAndUpdate(
+        { userId, symbol: trimmedSymbol },
+        {
+            userId,
+            symbol: trimmedSymbol,
+            company: trimmedCompany,
+            addedAt: new Date(),
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+};
+
+export const removeStockFromWatchlist = async ({ userId, symbol }: ModifyWatchlistParams) => {
+    const trimmedSymbol = symbol?.trim().toUpperCase();
+
+    if (!trimmedSymbol) {
+        throw new Error('Symbol is required');
+    }
+
+    await connectToDatabase();
+
+    await Watchlist.deleteOne({ userId, symbol: trimmedSymbol });
+};
+
