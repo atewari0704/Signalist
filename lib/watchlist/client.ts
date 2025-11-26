@@ -81,4 +81,20 @@ export const getWatchlistStatus = async (symbol: string): Promise<{ isInWatchlis
     };
 };
 
+export const getAllWatchlistSymbols = async (): Promise<string[]> => {
+    const response = await fetch(WATCHLIST_ENDPOINT, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    const body = await parseResponse(response);
+
+    if (!response.ok) {
+        throw new Error(body?.message || 'Failed to fetch watchlist');
+    }
+
+    return body?.symbols || [];
+};
 

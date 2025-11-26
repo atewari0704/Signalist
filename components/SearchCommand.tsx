@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { searchStocks } from '@/lib/actions/finnhub.actions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from 'sonner';
-import { addToWatchlist, getWatchlistStatus, removeFromWatchlist } from '@/lib/watchlist/client';
+import { addToWatchlist, getWatchlistStatus, removeFromWatchlist, getAllWatchlistSymbols } from '@/lib/watchlist/client';
 
 type WatchlistLookup = Record<string, boolean>;
 
@@ -83,6 +83,36 @@ export default function SearchCommand({
         document.addEventListener('keydown', down);
         return () => document.removeEventListener('keydown', down);
     }, []);
+
+    // Refresh watchlist status when dialog opens
+    useEffect(() => {
+        if (!open) return;
+
+        const refreshWatchlistStatus = async () => {
+            try {
+                const symbols = await getAllWatchlistSymbols();
+                const newLookup: WatchlistLookup = {};
+                symbols.forEach((symbol) => {
+                    newLookup[normalizeSymbol(symbol)] = true;
+                });
+
+                setWatchlistLookup(newLookup);
+                
+                // Update the displayed stocks with fresh watchlist status
+                setStocks((prev) =>
+                    prev.map((stock) => ({
+                        ...stock,
+                        isInWatchlist: newLookup[normalizeSymbol(stock.symbol)] ?? false,
+                    }))
+                );
+            } catch (error) {
+                console.error('Failed to refresh watchlist status:', error);
+                // Silently fail - we'll just use the existing state
+            }
+        };
+
+        refreshWatchlistStatus();
+    }, [open]);
 
     const handleSearch = useCallback(async () => {
         if (!isSearchMode) {

@@ -262,7 +262,22 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
 });
 
 
+interface FinnhubQuote {
+    c: number;  // Current price
+    d: number;  // Change
+    dp: number; // Percent change
+    h: number;  // High
+    l: number;  // Low
+    o: number;  // Open
+    pc: number; // Previous close
+}
 
+interface FinnhubMetrics {
+    metric: {
+        peBasicExclExtraTTM?: number;
+        [key: string]: any;
+    };
+}
 
 export type FinnhubStockProfile = {
     country?: string;
@@ -276,6 +291,10 @@ export type FinnhubStockProfile = {
     shareOutstanding?: number;
     ticker?: string;
     weburl?: string;
+    price?: number;
+    change?: number;
+    changePercent?: number;
+    peRatio?: number;
 };
 
 export const getStockProfile = cache(async (symbol: string): Promise<FinnhubStockProfile | null> => {
@@ -291,13 +310,38 @@ export const getStockProfile = cache(async (symbol: string): Promise<FinnhubStoc
             return null;
         }
 
-        const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(trimmed)}&token=${token}`;
-        const profile = await fetchJSON<FinnhubStockProfile>(url, 1800);
+        const profileUrl = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(trimmed)}&token=${token}`;
+        const quoteUrl = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(trimmed)}&token=${token}`;
+        const metricsUrl = `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(trimmed)}&metric=all&token=${token}`;
+
+        const [profileResult, quoteResult, metricsResult] = await Promise.allSettled([
+            fetchJSON<FinnhubStockProfile>(profileUrl, 1800),
+            fetchJSON<FinnhubQuote>(quoteUrl, 60), // Cache quote for 60s
+            fetchJSON<FinnhubMetrics>(metricsUrl, 1800)
+        ]);
+
+        let profile = profileResult.status === 'fulfilled' ? profileResult.value : null;
+
+        if (!profile && (quoteResult.status === 'fulfilled' || metricsResult.status === 'fulfilled')) {
+             // If profile failed but others succeeded, create a partial profile
+             profile = { ticker: trimmed };
+        }
+
+        if (!profile) return null;
+
+        if (quoteResult.status === 'fulfilled') {
+            profile.price = quoteResult.value.c;
+            profile.change = quoteResult.value.d;
+            profile.changePercent = quoteResult.value.dp;
+        }
+
+        if (metricsResult.status === 'fulfilled') {
+            profile.peRatio = metricsResult.value.metric?.peBasicExclExtraTTM;
+        }
+
         return profile;
     } catch (error) {
         console.error(`Error fetching stock profile for ${symbol}:`, error);
         return null;
     }
 });
-
-

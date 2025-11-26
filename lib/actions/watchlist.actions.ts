@@ -39,14 +39,14 @@ export const getWatchlistSymbolsByEmail = async (email: string): Promise<string[
             return [];
         }
 
-        // Query the Watchlist by userId and return just the symbols
-        const items = await Watchlist.find(
+        // Query the Watchlist document by userId and return just the symbols
+        const watchlist = await Watchlist.findOne(
             { userId },
-            { symbol: 1, _id: 0 }
+            { 'items.symbol': 1, _id: 0 }
         ).lean();
 
         // Extract symbols as strings
-        return items.map((i) => i.symbol);
+        return watchlist?.items?.map((item) => item.symbol) ?? [];
     } catch (error) {
         console.error('Error fetching watchlist symbols:', error);
         return [];
@@ -71,7 +71,7 @@ export const isStockInWatchlist = async ({ userId, symbol }: ModifyWatchlistPara
 
     await connectToDatabase();
 
-    const existing = await Watchlist.exists({ userId, symbol: trimmedSymbol });
+    const existing = await Watchlist.exists({ userId, 'items.symbol': trimmedSymbol });
 
     return Boolean(existing);
 };
@@ -94,16 +94,55 @@ export const addStockToWatchlist = async ({
 
     await connectToDatabase();
 
-    await Watchlist.findOneAndUpdate(
-        { userId, symbol: trimmedSymbol },
+    const now = new Date();
+
+    // Try to update existing entry first
+    const updateExisting = await Watchlist.updateOne(
+        { userId, 'items.symbol': trimmedSymbol },
         {
-            userId,
-            symbol: trimmedSymbol,
-            company: trimmedCompany,
-            addedAt: new Date(),
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
+            $set: {
+                'items.$.company': trimmedCompany,
+                'items.$.addedAt': now,
+            },
+        }
     );
+
+    if (updateExisting.matchedCount > 0) {
+        return;
+    }
+
+    try {
+        await Watchlist.findOneAndUpdate(
+            { userId },
+            {
+                $setOnInsert: { userId },
+                $push: {
+                    items: {
+                        symbol: trimmedSymbol,
+                        company: trimmedCompany,
+                        addedAt: now,
+                    },
+                },
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true },
+        );
+    } catch (error: any) {
+        // Handle race condition where the symbol was inserted by another request
+        if (error?.code === 11000) {
+            await Watchlist.updateOne(
+                { userId, 'items.symbol': trimmedSymbol },
+                {
+                    $set: {
+                        'items.$.company': trimmedCompany,
+                        'items.$.addedAt': now,
+                    },
+                }
+            );
+            return;
+        }
+
+        throw error;
+    }
 };
 
 export const removeStockFromWatchlist = async ({ userId, symbol }: ModifyWatchlistParams) => {
@@ -115,6 +154,13 @@ export const removeStockFromWatchlist = async ({ userId, symbol }: ModifyWatchli
 
     await connectToDatabase();
 
-    await Watchlist.deleteOne({ userId, symbol: trimmedSymbol });
+    await Watchlist.updateOne(
+        { userId },
+        {
+            $pull: {
+                items: { symbol: trimmedSymbol },
+            },
+        }
+    );
 };
 

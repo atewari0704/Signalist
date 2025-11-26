@@ -8,15 +8,17 @@ The watchlist system allows users to track specific stocks and receive personali
 
 ### 1. Database Layer (`/database/models/watchlist.model.ts`)
 
-**Watchlist Model:**
-- `userId` (string, required, indexed) - User ID from Better Auth
-- `symbol` (string, required, uppercase, trimmed) - Stock symbol (e.g., "AAPL")
-- `company` (string, required, trimmed) - Company name
-- `addedAt` (date, default: now) - Timestamp when added
+**Watchlist Model (User-centric):**
+- `userId` (string, required, unique) - Better Auth user id
+- `items` (array) - Embedded list of watchlist entries for that user
+  - `symbol` (string, uppercase, trimmed)
+  - `company` (string, trimmed)
+  - `addedAt` (date, default now)
 
 **Features:**
-- Compound index on `userId + symbol` prevents duplicate stocks per user
-- Uses Mongoose with hot-reload protection pattern
+- Compound index on `userId + items.symbol` prevents duplicate stocks per user
+- Single document per user keeps reads/writes atomic
+- Hot-reload protection retained
 
 ### 2. Action Layer
 
@@ -86,7 +88,7 @@ User Sign Up
     ↓
 User adds stocks to watchlist
     ↓
-Watchlist stored in MongoDB (userId + symbol)
+Watchlist stored in MongoDB (one document per user, `items[]` of stocks)
     ↓
 Daily at 12 PM UTC (Inngest Cron)
     ↓
@@ -130,7 +132,7 @@ BETTER_AUTH_SECRET=your_auth_secret
 BETTER_AUTH_BASE_URL=your_base_url
 ```
 
-## Testing
+## Testing & Migration
 
 Run the test script:
 ```bash
@@ -144,6 +146,12 @@ This tests:
 - Fetching general news
 - Fetching company news
 - Environment variables
+
+To migrate existing installations that previously stored one document per `(userId, symbol)` pair, run:
+```bash
+npx tsx scripts/migrate-watchlist-to-user-docs.ts
+```
+This consolidates legacy documents into the new per-user structure.
 
 ## Error Handling
 

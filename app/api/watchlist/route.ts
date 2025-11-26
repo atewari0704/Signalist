@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
 import { auth } from '@/lib/better-auth/auth';
-import { addStockToWatchlist, isStockInWatchlist, removeStockFromWatchlist } from '@/lib/actions/watchlist.actions';
+import { addStockToWatchlist, isStockInWatchlist, removeStockFromWatchlist, getWatchlistSymbolsByEmail } from '@/lib/actions/watchlist.actions';
 
 type WatchlistPayload = {
     symbol?: string;
@@ -78,19 +78,28 @@ export async function DELETE(request: Request) {
 
 export async function GET(request: Request) {
     try {
-        const userId = await getSessionUserId();
+        const requestHeaders = await headers();
+        const session = await auth.api.getSession({
+            headers: Object.fromEntries(requestHeaders.entries()),
+        });
 
-        if (!userId) {
+        const userId = session?.user?.id ?? null;
+        const userEmail = session?.user?.email ?? null;
+
+        if (!userId || !userEmail) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
         const { searchParams } = new URL(request.url);
         const symbol = searchParams.get('symbol');
 
+        // If no symbol provided, return all watchlist symbols
         if (!symbol) {
-            return NextResponse.json({ message: 'Symbol is required' }, { status: 400 });
+            const symbols = await getWatchlistSymbolsByEmail(userEmail);
+            return NextResponse.json({ symbols });
         }
 
+        // Otherwise, check if specific symbol is in watchlist
         const isInWatchlist = await isStockInWatchlist({ userId, symbol });
 
         return NextResponse.json({ isInWatchlist });
