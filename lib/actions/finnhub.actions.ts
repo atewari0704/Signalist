@@ -15,17 +15,17 @@ const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
  * @returns Parsed JSON response
  */
 async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T> {
-    const options: RequestInit = revalidateSeconds
-        ? { cache: 'force-cache', next: { revalidate: revalidateSeconds } }
-        : { cache: 'no-store' };
+  const options: RequestInit = revalidateSeconds
+    ? { cache: 'force-cache', next: { revalidate: revalidateSeconds } }
+    : { cache: 'no-store' };
 
-    const response = await fetch(url, options);
+  const response = await fetch(url, options);
 
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
 
-    return response.json();
+  return response.json();
 }
 
 /**
@@ -34,78 +34,79 @@ async function fetchJSON<T>(url: string, revalidateSeconds?: number): Promise<T>
  * @returns Array of formatted news articles (max 6)
  */
 export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> {
-    try {
-        if (!FINNHUB_API_KEY) {
-            throw new Error('Finnhub API key is not configured');
-        }
-
-        // Compute date range for last 5 days
-        const { from, to } = getDateRange(5);
-
-        // If symbols are provided, fetch company news
-        if (symbols && symbols.length > 0) {
-            // Clean and uppercase symbols
-            const cleanSymbols = symbols
-                .map(s => s.trim().toUpperCase())
-                .filter(s => s.length > 0)
-                .slice(0, 10); // Limit to 10 symbols max
-
-            if (cleanSymbols.length === 0) {
-                // Fallback to general news if no valid symbols
-                return fetchGeneralNews(from, to);
-            }
-
-            const articles: MarketNewsArticle[] = [];
-            const maxRounds = 6;
-            let roundIndex = 0;
-
-            // Round-robin through symbols, max 6 iterations
-            while (articles.length < 6 && roundIndex < maxRounds) {
-                for (const symbol of cleanSymbols) {
-                    if (articles.length >= 6) break;
-
-                    try {
-                        const url = `${FINNHUB_BASE_URL}/company-news?symbol=${symbol}&from=${from}&to=${to}&token=${FINNHUB_API_KEY}`;
-                        const newsData = await fetchJSON<RawNewsArticle[]>(url);
-
-                        // Find first valid article not already collected
-                        const validArticle = newsData.find((article) => {
-                            if (!validateArticle(article)) return false;
-                            // Check if we already have this article (by URL)
-                            return !articles.some(a => a.url === article.url);
-                        });
-
-                        if (validArticle) {
-                            const formatted = formatArticle(validArticle, true, symbol, articles.length);
-                            articles.push(formatted);
-                        }
-                    } catch (error) {
-                        console.error(`Error fetching news for ${symbol}:`, error);
-                        // Continue to next symbol
-                    }
-                }
-                roundIndex++;
-            }
-
-            // Sort by datetime (newest first) and return
-            articles.sort((a, b) => b.datetime - a.datetime);
-            
-            // If we got articles, return them
-            if (articles.length > 0) {
-                return articles;
-            }
-
-            // Fallback to general news if no company news found
-            console.log('No company news found, falling back to general news');
-            return fetchGeneralNews(from, to);
-        }
-
-        // No symbols provided, fetch general market news
-        return fetchGeneralNews(from, to);
-    } catch (error) {
-        console.error('Error in getNews:', error);
-        throw new Error('Failed to fetch news');
+  try {
+    if (!FINNHUB_API_KEY) {
+      throw new Error('Finnhub API key is not configured');
     }
+
+    // Compute date range for last 5 days
+    const { from, to } = getDateRange(5);
+
+    // If symbols are provided, fetch company news
+    if (symbols && symbols.length > 0) {
+      // Clean and uppercase symbols
+      const cleanSymbols = symbols
+        .map(s => s.trim().toUpperCase())
+        .filter(s => s.length > 0)
+        .slice(0, 10); // Limit to 10 symbols max
+
+      if (cleanSymbols.length === 0) {
+        // Fallback to general news if no valid symbols
+        return fetchGeneralNews(from, to);
+      }
+
+      const articles: MarketNewsArticle[] = [];
+      const maxRounds = 6;
+      let roundIndex = 0;
+
+      // Round-robin through symbols, max 6 iterations
+      while (articles.length < 6 && roundIndex < maxRounds) {
+        for (const symbol of cleanSymbols) {
+          if (articles.length >= 6) break;
+
+          try {
+            console.log(`Fetching news for symbol: ${symbol}`);
+            const url = `${FINNHUB_BASE_URL}/company-news?symbol=${symbol}&from=${from}&to=${to}&token=${FINNHUB_API_KEY}`;
+            const newsData = await fetchJSON<RawNewsArticle[]>(url);
+
+            // Find first valid article not already collected
+            const validArticle = newsData.find((article) => {
+              if (!validateArticle(article)) return false;
+              // Check if we already have this article (by URL)
+              return !articles.some(a => a.url === article.url);
+            });
+
+            if (validArticle) {
+              const formatted = formatArticle(validArticle, true, symbol, articles.length);
+              articles.push({ ...formatted, symbol });
+            }
+          } catch (error) {
+            console.error(`Error fetching news for ${symbol}:`, error);
+            // Continue to next symbol
+          }
+        }
+        roundIndex++;
+      }
+
+      // Sort by datetime (newest first) and return
+      articles.sort((a, b) => b.datetime - a.datetime);
+
+      // If we got articles, return them
+      if (articles.length > 0) {
+        return articles;
+      }
+
+      // Fallback to general news if no company news found
+      console.log('No company news found, falling back to general news');
+      return fetchGeneralNews(from, to);
+    }
+
+    // No symbols provided, fetch general market news
+    return fetchGeneralNews(from, to);
+  } catch (error) {
+    console.error('Error in getNews:', error);
+    throw new Error('Failed to fetch news');
+  }
 }
 
 /**
@@ -115,42 +116,42 @@ export async function getNews(symbols?: string[]): Promise<MarketNewsArticle[]> 
  * @returns Array of formatted news articles (max 6)
  */
 async function fetchGeneralNews(from: string, to: string): Promise<MarketNewsArticle[]> {
-    if (!FINNHUB_API_KEY) {
-        throw new Error('Finnhub API key is not configured');
+  if (!FINNHUB_API_KEY) {
+    throw new Error('Finnhub API key is not configured');
+  }
+
+  const url = `${FINNHUB_BASE_URL}/news?category=general&token=${FINNHUB_API_KEY}`;
+  const newsData = await fetchJSON<RawNewsArticle[]>(url);
+
+  // Filter and validate articles
+  const validArticles = newsData.filter(validateArticle);
+
+  // Deduplicate by id, url, and headline
+  const seenIds = new Set<number>();
+  const seenUrls = new Set<string>();
+  const seenHeadlines = new Set<string>();
+
+  const uniqueArticles = validArticles.filter((article) => {
+    const isDuplicate =
+      seenIds.has(article.id) ||
+      seenUrls.has(article.url!) ||
+      seenHeadlines.has(article.headline!);
+
+    if (!isDuplicate) {
+      seenIds.add(article.id);
+      seenUrls.add(article.url!);
+      seenHeadlines.add(article.headline!);
+      return true;
     }
+    return false;
+  });
 
-    const url = `${FINNHUB_BASE_URL}/news?category=general&token=${FINNHUB_API_KEY}`;
-    const newsData = await fetchJSON<RawNewsArticle[]>(url);
+  // Take top 6, format them
+  const topArticles = uniqueArticles.slice(0, 6);
 
-    // Filter and validate articles
-    const validArticles = newsData.filter(validateArticle);
-
-    // Deduplicate by id, url, and headline
-    const seenIds = new Set<number>();
-    const seenUrls = new Set<string>();
-    const seenHeadlines = new Set<string>();
-    
-    const uniqueArticles = validArticles.filter((article) => {
-        const isDuplicate = 
-            seenIds.has(article.id) || 
-            seenUrls.has(article.url!) || 
-            seenHeadlines.has(article.headline!);
-
-        if (!isDuplicate) {
-            seenIds.add(article.id);
-            seenUrls.add(article.url!);
-            seenHeadlines.add(article.headline!);
-            return true;
-        }
-        return false;
-    });
-
-    // Take top 6, format them
-    const topArticles = uniqueArticles.slice(0, 6);
-    
-    return topArticles.map((article, index) => 
-        formatArticle(article, false, undefined, index)
-    );
+  return topArticles.map((article, index) =>
+    formatArticle(article, false, undefined, index)
+  );
 }
 
 export const searchStocks = cache(async (query?: string): Promise<StockWithWatchlistStatus[]> => {
@@ -263,85 +264,85 @@ export const searchStocks = cache(async (query?: string): Promise<StockWithWatch
 
 
 interface FinnhubQuote {
-    c: number;  // Current price
-    d: number;  // Change
-    dp: number; // Percent change
-    h: number;  // High
-    l: number;  // Low
-    o: number;  // Open
-    pc: number; // Previous close
+  c: number;  // Current price
+  d: number;  // Change
+  dp: number; // Percent change
+  h: number;  // High
+  l: number;  // Low
+  o: number;  // Open
+  pc: number; // Previous close
 }
 
 interface FinnhubMetrics {
-    metric: {
-        peBasicExclExtraTTM?: number;
-        [key: string]: any;
-    };
+  metric: {
+    peBasicExclExtraTTM?: number;
+    [key: string]: any;
+  };
 }
 
 export type FinnhubStockProfile = {
-    country?: string;
-    currency?: string;
-    exchange?: string;
-    ipo?: string;
-    logo?: string;
-    marketCapitalization?: number;
-    name?: string;
-    phone?: string;
-    shareOutstanding?: number;
-    ticker?: string;
-    weburl?: string;
-    price?: number;
-    change?: number;
-    changePercent?: number;
-    peRatio?: number;
+  country?: string;
+  currency?: string;
+  exchange?: string;
+  ipo?: string;
+  logo?: string;
+  marketCapitalization?: number;
+  name?: string;
+  phone?: string;
+  shareOutstanding?: number;
+  ticker?: string;
+  weburl?: string;
+  price?: number;
+  change?: number;
+  changePercent?: number;
+  peRatio?: number;
 };
 
 export const getStockProfile = cache(async (symbol: string): Promise<FinnhubStockProfile | null> => {
-    try {
-        const token = process.env.FINNHUB_API_KEY ?? process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
-        if (!token) {
-            console.error('Error fetching stock profile:', new Error('FINNHUB API key is not configured'));
-            return null;
-        }
-
-        const trimmed = typeof symbol === 'string' ? symbol.trim().toUpperCase() : '';
-        if (!trimmed) {
-            return null;
-        }
-
-        const profileUrl = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(trimmed)}&token=${token}`;
-        const quoteUrl = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(trimmed)}&token=${token}`;
-        const metricsUrl = `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(trimmed)}&metric=all&token=${token}`;
-
-        const [profileResult, quoteResult, metricsResult] = await Promise.allSettled([
-            fetchJSON<FinnhubStockProfile>(profileUrl, 1800),
-            fetchJSON<FinnhubQuote>(quoteUrl, 60), // Cache quote for 60s
-            fetchJSON<FinnhubMetrics>(metricsUrl, 1800)
-        ]);
-
-        let profile = profileResult.status === 'fulfilled' ? profileResult.value : null;
-
-        if (!profile && (quoteResult.status === 'fulfilled' || metricsResult.status === 'fulfilled')) {
-             // If profile failed but others succeeded, create a partial profile
-             profile = { ticker: trimmed };
-        }
-
-        if (!profile) return null;
-
-        if (quoteResult.status === 'fulfilled') {
-            profile.price = quoteResult.value.c;
-            profile.change = quoteResult.value.d;
-            profile.changePercent = quoteResult.value.dp;
-        }
-
-        if (metricsResult.status === 'fulfilled') {
-            profile.peRatio = metricsResult.value.metric?.peBasicExclExtraTTM;
-        }
-
-        return profile;
-    } catch (error) {
-        console.error(`Error fetching stock profile for ${symbol}:`, error);
-        return null;
+  try {
+    const token = process.env.FINNHUB_API_KEY ?? process.env.NEXT_PUBLIC_FINNHUB_API_KEY;
+    if (!token) {
+      console.error('Error fetching stock profile:', new Error('FINNHUB API key is not configured'));
+      return null;
     }
+
+    const trimmed = typeof symbol === 'string' ? symbol.trim().toUpperCase() : '';
+    if (!trimmed) {
+      return null;
+    }
+
+    const profileUrl = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(trimmed)}&token=${token}`;
+    const quoteUrl = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(trimmed)}&token=${token}`;
+    const metricsUrl = `${FINNHUB_BASE_URL}/stock/metric?symbol=${encodeURIComponent(trimmed)}&metric=all&token=${token}`;
+
+    const [profileResult, quoteResult, metricsResult] = await Promise.allSettled([
+      fetchJSON<FinnhubStockProfile>(profileUrl, 1800),
+      fetchJSON<FinnhubQuote>(quoteUrl, 60), // Cache quote for 60s
+      fetchJSON<FinnhubMetrics>(metricsUrl, 1800)
+    ]);
+
+    let profile = profileResult.status === 'fulfilled' ? profileResult.value : null;
+
+    if (!profile && (quoteResult.status === 'fulfilled' || metricsResult.status === 'fulfilled')) {
+      // If profile failed but others succeeded, create a partial profile
+      profile = { ticker: trimmed };
+    }
+
+    if (!profile) return null;
+
+    if (quoteResult.status === 'fulfilled') {
+      profile.price = quoteResult.value.c;
+      profile.change = quoteResult.value.d;
+      profile.changePercent = quoteResult.value.dp;
+    }
+
+    if (metricsResult.status === 'fulfilled') {
+      profile.peRatio = metricsResult.value.metric?.peBasicExclExtraTTM;
+    }
+
+    return profile;
+  } catch (error) {
+    console.error(`Error fetching stock profile for ${symbol}:`, error);
+    return null;
+  }
 });

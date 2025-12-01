@@ -7,8 +7,9 @@ import { removeFromWatchlist } from '@/lib/watchlist/client'
 import { toast } from 'sonner';
 import { FinnhubStockProfile, getStockProfile } from '@/lib/actions/finnhub.actions'
 import { cn } from '@/lib/utils';
-import {columns, type WatchListRow} from './columns'
+import { columns, type WatchListRow } from './columns'
 import { DataTable } from './data-table'
+import StockNews from '@/components/StockNews'
 
 
 
@@ -24,7 +25,7 @@ const WatchlistPage = () => {
         const loadData = async () => {
             try {
                 setLoading(true)
-                
+
                 // 1. Fetch symbols first
                 const symbolData = await getAllWatchlistSymbols()
                 setSymbols(symbolData)
@@ -58,10 +59,7 @@ const WatchlistPage = () => {
     }, [])
 
     // OnClick the symbol must be removed from the watchlist from mongodb and the watchlist state must be updated
-    const removeFromWatchList = async (event: React.MouseEvent<HTMLButtonElement>, symbol: string) => {
-        event.preventDefault()
-        event.stopPropagation()
-
+    const handleRemoveSymbol = async (symbol: string) => {
         if (removingId) return // Prevent multiple clicks while animating
 
         // Start animation
@@ -86,6 +84,12 @@ const WatchlistPage = () => {
         }
     }
 
+    const removeFromWatchList = async (event: React.MouseEvent<HTMLButtonElement>, symbol: string) => {
+        event.preventDefault()
+        event.stopPropagation()
+        await handleRemoveSymbol(symbol)
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -104,52 +108,10 @@ const WatchlistPage = () => {
 
     return (
         <>
-        <div className="container mx-auto px-4 py-8">
-            <DataTable columns={columns} data={watchlistRows} />
-        </div>
-
-
-
-
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-6">My Watchlist</h1>
-            {!symbols.length ? (
-                <div className="text-center py-12">
-                    <p className="text-gray-400 text-lg">No symbols in watchlist</p>
-                    <p className="text-gray-500 text-sm mt-2">Start adding stocks to your watchlist using the search feature</p>
-                </div>
-            ) : (
-                <div className="grid gap-4">
-                    {symbols.map((symbol) => (
-                        <div 
-                            key={symbol} 
-                            className={cn(
-                                "bg-gray-800 rounded-lg p-4 hover:bg-gray-600 transition-all duration-500 ease-in-out",
-                                removingId === symbol ? "opacity-0 -translate-x-full scale-95 h-0 py-0 overflow-hidden margin-0" : "opacity-100 translate-x-0"
-                            )}
-                        >
-                            <div className={cn("transition-opacity duration-300", removingId === symbol ? "opacity-0" : "opacity-100")}>
-                                <div className="flex justify-between items-center">
-                                    <h2 className="text-xl font-semibold">{symbol}</h2>
-                                    <button
-                                        type="button"
-                                        onClick={(event) => removeFromWatchList(event, symbol)}
-                                        className="group flex items-center justify-center rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-700 hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
-                                        disabled={removingId === symbol}
-                                    >
-                                        <Star
-                                            className="h-5 w-5 text-yellow-400 group-hover:fill-none"
-                                            fill="currentColor"
-                                            strokeWidth={2}
-                                        />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+            <div className="container mx-auto px-4 py-8">
+                <DataTable columns={columns} data={watchlistRows} onRemove={handleRemoveSymbol} />
+                <StockNews symbols={symbols} />
+            </div>
         </>
     )
 }

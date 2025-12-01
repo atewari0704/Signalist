@@ -1,41 +1,61 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
+import { formatMarketCapValue, formatPrice } from "@/lib/utils"
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
 export type WatchListRow = {
-    Company: string;
-    Symbol: string;
-    Price: number;
-    Change: number;
-    MarketCap: number;
-    peRatio: number;
+  Company: string;
+  Symbol: string;
+  Price: number;
+  Change: number;
+  MarketCap: number;
+  peRatio: number;
 }
 
 export const columns: ColumnDef<WatchListRow>[] = [
   {
     accessorKey: "Company",
     header: "Company",
+    cell: ({ row }) => <div className="font-medium">{row.getValue("Company")}</div>
   },
   {
     accessorKey: "Symbol",
     header: "Symbol",
+    cell: ({ row }) => <div className="font-medium">{row.getValue("Symbol")}</div>
   },
   {
     accessorKey: "Price",
-    header: "Price",
+    header: () => <div className="text-left">Price</div>,
+    cell: ({ row }) => {
+        return <div className="text-left font-medium">{formatPrice(row.getValue("Price"))}</div>
+    }
   },
   {
     accessorKey: "Change",
-    header: "Change",
+    header: () => <div className="text-left">Change</div>,
+    cell: ({ row }) => {
+        const change = parseFloat(row.getValue("Change"))
+        const isPositive = change > 0
+        return (
+            <div className={`text-left font-medium ${isPositive ? "text-green-500" : "text-red-500"}`}>
+                {isPositive ? "+" : ""}{change.toFixed(2)}%
+            </div>
+        )
+    }
   },
   {
     accessorKey: "MarketCap",
-    header: "MarketCap",
+    header: () => <div className="text-left">Market Cap</div>,
+    cell: ({ row }) => {
+         return <div className="text-left">{formatMarketCapValue(row.getValue("MarketCap"))}</div>
+    }
   },
   {
     accessorKey: "peRatio",
-    header: "PE Ratio",
+    header: () => <div className="text-left">P/E Ratio</div>,
+     cell: ({ row }) => {
+         const val = row.getValue("peRatio") as number
+         return <div className="text-left">{val ? val.toFixed(1) : "N/A"}</div>
+    }
   },
 ]
