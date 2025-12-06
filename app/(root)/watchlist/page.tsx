@@ -5,25 +5,31 @@ import React, { useEffect, useState } from 'react'
 import { Loader2, Star } from 'lucide-react'
 import { removeFromWatchlist } from '@/lib/watchlist/client'
 import { toast } from 'sonner';
-import { FinnhubStockProfile, getStockProfile } from '@/lib/actions/finnhub.actions'
+import { FinnhubStockProfile, getStockProfile, searchStocks } from '@/lib/actions/finnhub.actions'
 import { cn } from '@/lib/utils';
 import { columns, type WatchListRow } from './columns'
 import { DataTable } from './data-table'
 import StockNews from '@/components/StockNews'
+import { Button } from '@/components/ui/button'
+import SearchCommand from '@/components/SearchCommand'
 
 
 
 
 const WatchlistPage = () => {
     const [symbols, setSymbols] = useState<string[]>([])
+    const [initialStocks, setInitialStocks] = useState<StockWithWatchlistStatus[]>([])
     const [watchlistRows, setWatchlistRows] = useState<WatchListRow[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [removingId, setRemovingId] = useState<string | null>(null)
 
+
     useEffect(() => {
         const loadData = async () => {
             try {
+                const initialStocks = await searchStocks();
+                setInitialStocks(initialStocks)
                 setLoading(true)
 
                 // 1. Fetch symbols first
@@ -107,12 +113,32 @@ const WatchlistPage = () => {
     }
 
     return (
-        <>
-            <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-h-screen p-4">
+            {/* Component 1 (Top Left) */}
+            <div className="w-full ">
+
+                <div className="flex items-center justify-between mb-4">
+                    <h1 className="text-2xl font-bold">WatchList</h1>
+                    <SearchCommand
+                        renderAs="button"
+                        label="Add Stock"
+                        initialStocks={initialStocks}
+                    />
+                </div>
+
                 <DataTable columns={columns} data={watchlistRows} onRemove={handleRemoveSymbol} />
+            </div>
+
+            {/* Component 2 (Top Right) */}
+            <div className="w-full h-[600px] border rounded-xl p-4">
+                Component 2
+            </div>
+
+            {/* Component 3 (Bottom - Full Width) */}
+            <div className="md:col-span-2 w-full">
                 <StockNews symbols={symbols} />
             </div>
-        </>
+        </div>
     )
 }
 

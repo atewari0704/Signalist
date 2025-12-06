@@ -62,9 +62,9 @@ const StockNews = ({ symbols }: { symbols: string[] }) => {
                         href={article.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex flex-col bg-card border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full"
+                        className="group flex flex-col border-gray-600 bg-gray-800  rounded-xl overflow-hidden hover:shadow-lg hover:bg-gray-700 transition-all duration-300 h-full hover:scale-105"
                     >
-                        <div className="relative h-48 w-full overflow-hidden bg-muted">
+                        {/* <div className="relative h-48 w-full overflow-hidden bg-muted">
                             {article.image ? (
                                 <Image
                                     src={article.image}
@@ -81,7 +81,7 @@ const StockNews = ({ symbols }: { symbols: string[] }) => {
                             <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
                                 {formatTimeAgo(article.datetime)}
                             </div>
-                        </div>
+                        </div> */}
 
                         <div className="flex flex-col flex-grow p-5">
                             <div className="flex items-center gap-2 mb-3">
