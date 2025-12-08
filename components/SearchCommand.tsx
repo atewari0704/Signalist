@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { searchStocks } from '@/lib/actions/finnhub.actions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from 'sonner';
-import { addToWatchlist, getWatchlistStatus, removeFromWatchlist, getAllWatchlistSymbols } from '@/lib/watchlist/client';
+import { addToMyWatchlist, getMyWatchlistStatus, removeFromMyWatchlist, getMyWatchlistSymbols } from '@/lib/actions/watchlist.actions'
 
 type WatchlistLookup = Record<string, boolean>;
 
@@ -90,14 +90,14 @@ export default function SearchCommand({
 
         const refreshWatchlistStatus = async () => {
             try {
-                const symbols = await getAllWatchlistSymbols();
+                const symbols = await getMyWatchlistSymbols();
                 const newLookup: WatchlistLookup = {};
                 symbols.forEach((symbol) => {
                     newLookup[normalizeSymbol(symbol)] = true;
                 });
 
                 setWatchlistLookup(newLookup);
-                
+
                 // Update the displayed stocks with fresh watchlist status
                 setStocks((prev) =>
                     prev.map((stock) => ({
@@ -165,12 +165,12 @@ export default function SearchCommand({
         setPendingSymbol(symbol);
 
         try {
-            const { isInWatchlist: currentlyInWatchlist } = await getWatchlistStatus(symbol);
+            const { isInWatchlist: currentlyInWatchlist } = await getMyWatchlistStatus(symbol);
 
             if (currentlyInWatchlist) {
-                await removeFromWatchlist(symbol);
+                await removeFromMyWatchlist(symbol);
             } else {
-                await addToWatchlist(symbol, stock.name);
+                await addToMyWatchlist(symbol, stock.name);
             }
 
             const nextLookup: WatchlistLookup = { ...watchlistLookup };
