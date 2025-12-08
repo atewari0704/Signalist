@@ -1,5 +1,6 @@
 import TradingViewWidget from "@/components/TradingViewWidget";
 import AddToWatchlistButton from "@/components/AddToWatchlistButton";
+import { getStockProfile } from "@/lib/actions/finnhub.actions";
 import {
     ADVANCED_CHART_WIDGET_CONFIG,
     ADVANCED_LINE_CHART_WIDGET_CONFIG,
@@ -20,6 +21,9 @@ const StockPage = async ({ params, searchParams }: StockPageProps) => {
 
     console.log('exchange', exchange);
     console.log('symbol', symbol);
+
+    const profile = await getStockProfile(symbol);
+    const companyName = profile?.name ?? symbol;
 
     exchange = exchange?.split(" ")[0]; //this way we only keep Nasdq instead of Nasdaq Global markets
 
@@ -66,7 +70,7 @@ const StockPage = async ({ params, searchParams }: StockPageProps) => {
                     </div>
 
                     <div className="flex flex-col gap-6">
-                        <AddToWatchlistButton symbol={symbol} exchange={exchange} />
+                        <AddToWatchlistButton symbol={symbol} exchange={exchange} companyName={companyName} />
                         <TradingViewWidget
                             title="Technical Analysis"
                             scriptUrl={`${scriptBaseUrl}technical-analysis.js`}

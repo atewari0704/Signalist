@@ -2,6 +2,8 @@
 
 import { connectToDatabase } from "@/database/mongoose";
 import { Watchlist } from "@/database/models/watchlist.model";
+import { auth } from "@/lib/better-auth/auth";
+import { headers } from "next/headers";
 
 /**
  * Get watchlist symbols for a user by their email
@@ -13,7 +15,7 @@ export const getWatchlistSymbolsByEmail = async (email: string): Promise<string[
         // Connect to database
         const mongoose = await connectToDatabase();
         const db = mongoose.connection.db;
-        
+
         if (!db) {
             console.error('Failed to connect to database');
             return [];
@@ -164,3 +166,87 @@ export const removeStockFromWatchlist = async ({ userId, symbol }: ModifyWatchli
     );
 };
 
+
+export const getMyWatchlistSymbols = async (): Promise<string[]> => {
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers() // await headers() is required in newer next.js versions, safe to await
+        });
+
+        if (!session?.user?.email) {
+            return [];
+        }
+
+        return await getWatchlistSymbolsByEmail(session.user.email);
+    } catch (error) {
+        console.error("Failed to fetch my watchlist symbols", error);
+        return [];
+    }
+}
+
+export const removeFromMyWatchlist = async (symbol: string) => {
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session?.user?.id) {
+            throw new Error("Unauthorized");
+        }
+
+        await removeStockFromWatchlist({
+            userId: session.user.id,
+            symbol
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to remove from watchlist", error);
+        throw error;
+    }
+}
+
+export const addToMyWatchlist = async (symbol: string, company: string) => {
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session?.user?.id) {
+            throw new Error("Unauthorized");
+        }
+
+        await addStockToWatchlist({
+            userId: session.user.id,
+            symbol,
+            company
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to add to watchlist", error);
+        throw error;
+    }
+}
+
+export const getMyWatchlistStatus = async (symbol: string) => {
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session?.user?.id) {
+            return { isInWatchlist: false };
+        }
+
+        const isInWatchlist = await isStockInWatchlist({
+            userId: session.user.id,
+            symbol
+        });
+
+        return { isInWatchlist };
+    } catch (error) {
+        console.error("Failed to check watchlist status", error);
+        return { isInWatchlist: false };
+    }
+}

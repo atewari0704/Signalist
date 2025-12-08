@@ -61,7 +61,7 @@ export const columns: ColumnDef<WatchListRow>[] = [
   },
   {
     id: "alert",
-    header: () => <div className="text-center">Add Alert</div>,
+    header: () => <div className="text-left">Add Alert</div>,
     cell: ({ row }) => <AlertCell symbol={row.original.Symbol} />
   },
 ]

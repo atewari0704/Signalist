@@ -1,9 +1,8 @@
 "use client"
 
-import { getAllWatchlistSymbols } from '@/lib/watchlist/client'
+import { getMyWatchlistSymbols, removeFromMyWatchlist } from '@/lib/actions/watchlist.actions'
 import React, { useEffect, useState } from 'react'
 import { Loader2, Star } from 'lucide-react'
-import { removeFromWatchlist } from '@/lib/watchlist/client'
 import { toast } from 'sonner';
 import { FinnhubStockProfile, getStockProfile, searchStocks } from '@/lib/actions/finnhub.actions'
 import { cn } from '@/lib/utils';
@@ -33,7 +32,8 @@ const WatchlistPage = () => {
                 setLoading(true)
 
                 // 1. Fetch symbols first
-                const symbolData = await getAllWatchlistSymbols()
+                // 1. Fetch symbols first
+                const symbolData = await getMyWatchlistSymbols()
                 setSymbols(symbolData)
                 console.log("Fetched symbols:", symbolData)
 
@@ -75,7 +75,7 @@ const WatchlistPage = () => {
         await new Promise(resolve => setTimeout(resolve, 500))
 
         try {
-            await removeFromWatchlist(symbol)
+            await removeFromMyWatchlist(symbol)
 
             // Toast saying symbol removed from watchlist
             toast.success(`${symbol} removed from watchlist`)
