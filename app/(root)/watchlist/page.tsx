@@ -11,6 +11,7 @@ import { DataTable } from './data-table'
 import StockNews from '@/components/StockNews'
 import { Button } from '@/components/ui/button'
 import SearchCommand from '@/components/SearchCommand'
+import AlertsSection from '@/components/AlertsSection'
 
 
 
@@ -129,10 +130,7 @@ const WatchlistPage = () => {
                 <DataTable columns={columns} data={watchlistRows} onRemove={handleRemoveSymbol} />
             </div>
 
-            {/* Component 2 (Top Right) */}
-            <div className="w-full h-[600px] border rounded-xl p-4">
-                Component 2
-            </div>
+            <AlertsSection />
 
             {/* Component 3 (Bottom - Full Width) */}
             <div className="md:col-span-2 w-full">

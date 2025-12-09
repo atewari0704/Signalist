@@ -106,6 +106,15 @@ export const FINANCIALS_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
 });
 
 
+export const SINGLE_TICKER_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
+    symbol,
+    colorTheme: "dark",
+    isTransparent: true,
+    locale: "en",
+    width: "100%"
+})
+
+
 export const TICKER_TAPE_WIDGET_CONFIG = {
     symbols: [
         { proName: 'FOREXCOM:SPXUSD', title: 'S&P 500 Index' },

@@ -2,21 +2,27 @@
 
 import { connectToDatabase } from "@/database/mongoose";
 import { Alert, AlertItem } from "@/database/models/alert.model";
+import { auth } from "../better-auth/auth";
+import { headers } from "next/headers";
 
 /**
  * Get all alerts for a specific user.
  * Each alert contains the stock symbol and condition.
  */
-export const getStocksWithAlerts = async (userId: string): Promise<AlertItem[]> => {
+export const getStocksWithAlerts = async (): Promise<AlertItem[]> => {
     try {
-        if (!userId) {
+        const session = await auth.api.getSession({
+            headers: await headers() // Ensure headers are awaited properly
+        });
+
+        if (!session?.user?.id) {
             console.error("No userId provided to getStocksWithAlerts");
             return [];
         }
 
         await connectToDatabase();
 
-        const userAlerts = await Alert.findOne({ userId });
+        const userAlerts = await Alert.findOne({ userId: session.user.id });
 
         if (!userAlerts || !userAlerts.alerts) {
             return [];
@@ -31,29 +37,31 @@ export const getStocksWithAlerts = async (userId: string): Promise<AlertItem[]> 
 };
 
 type AlertParams = {
-    userId: string;
     symbol: string;
     targetPrice: number;
     condition: 'ABOVE' | 'BELOW';
 };
 
+
 /**
  * Add a new alert for a specific stock.
- * @param userId - The ID of the user adding the alert.
  * @param symbol - The stock symbol to add an alert for.
  * @param targetPrice - The target price for the alert.
  * @param condition - The condition for the alert (e.g., "ABOVE" or "BELOW").
  * @returns The updated user alerts object.
  */
 export const addStockAlert = async ({
-    userId,
     symbol,
     targetPrice,
     condition,
 }: AlertParams) => {
     try {
-        if (!userId) {
-            throw new Error('User ID is required');
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session?.user?.id) {
+            throw new Error("Unauthorized");
         }
 
         if (!symbol) {
@@ -71,10 +79,10 @@ export const addStockAlert = async ({
         };
 
         const updated = await Alert.findOneAndUpdate(
-            { userId },
+            { userId: session.user.id },
             {
                 $push: { alerts: newAlert },
-                $setOnInsert: { userId }, // Ensure userId is set on insert
+                $setOnInsert: { userId: session.user.id }, // Ensure userId is set on insert
             },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
@@ -90,21 +98,23 @@ export const addStockAlert = async ({
 /**
  * Remove an alert for a specific stock.
  * Matches on symbol, targetPrice, and condition to remove the specific alert.
- * @param userId - The ID of the user adding the alert.
  * @param symbol - The stock symbol to add an alert for.
  * @param targetPrice - The target price for the alert.
  * @param condition - The condition for the alert (e.g., "ABOVE" or "BELOW").
  * @returns The updated user alerts object.
  */
 export const removeStockAlert = async ({
-    userId,
     symbol,
     targetPrice,
     condition,
 }: AlertParams) => {
     try {
-        if (!userId) {
-            throw new Error('User ID is required');
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session?.user?.id) {
+            throw new Error("Unauthorized");
         }
 
         if (!symbol) {
@@ -114,7 +124,7 @@ export const removeStockAlert = async ({
         await connectToDatabase();
 
         const updated = await Alert.findOneAndUpdate(
-            { userId },
+            { userId: session.user.id },
             {
                 $pull: {
                     alerts: {
