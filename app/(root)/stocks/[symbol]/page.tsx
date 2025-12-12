@@ -19,9 +19,6 @@ const StockPage = async ({ params, searchParams }: StockPageProps) => {
     const { symbol } = await params;
     let { exchange } = await searchParams;
 
-    console.log('exchange', exchange);
-    console.log('symbol', symbol);
-
     const profile = await getStockProfile(symbol);
     const companyName = profile?.name ?? symbol;
 
@@ -29,13 +26,8 @@ const StockPage = async ({ params, searchParams }: StockPageProps) => {
 
     const scriptBaseUrl = "https://s3.tradingview.com/external-embedding/embed-widget-";
 
-    const normalizedSymbol = symbol?.toUpperCase() ?? "UNKNOWN";
+    const normalizedSymbol = symbol.includes(":") ? symbol.split(":")[1].toUpperCase() : symbol.toUpperCase();
     const normalizedExchange = exchange?.toUpperCase();
-
-    const tradingViewSymbol =
-        normalizedSymbol.includes(":") || !normalizedExchange
-            ? normalizedSymbol
-            : `${normalizedExchange}:${normalizedSymbol}`;
 
     return (
         <div className="min-h-screen w-full bg-[#0f0f0f] px-4 py-8 text-gray-100">
@@ -52,19 +44,19 @@ const StockPage = async ({ params, searchParams }: StockPageProps) => {
                     <div className="flex flex-col gap-6">
                         <TradingViewWidget
                             scriptUrl={`${scriptBaseUrl}symbol-info.js`}
-                            config={SYMBOL_INFO_WIDGET_CONFIG(tradingViewSymbol)}
+                            config={SYMBOL_INFO_WIDGET_CONFIG(normalizedSymbol)}
                             height={220}
                         />
                         <TradingViewWidget
                             title="Advanced Chart"
                             scriptUrl={`${scriptBaseUrl}advanced-chart.js`}
-                            config={ADVANCED_CHART_WIDGET_CONFIG(tradingViewSymbol)}
+                            config={ADVANCED_CHART_WIDGET_CONFIG(normalizedSymbol)}
                             height={600}
                         />
                         <TradingViewWidget
                             title="Line Chart"
                             scriptUrl={`${scriptBaseUrl}advanced-chart.js`}
-                            config={ADVANCED_LINE_CHART_WIDGET_CONFIG(tradingViewSymbol)}
+                            config={ADVANCED_LINE_CHART_WIDGET_CONFIG(normalizedSymbol)}
                             height={400}
                         />
                     </div>
@@ -74,19 +66,19 @@ const StockPage = async ({ params, searchParams }: StockPageProps) => {
                         <TradingViewWidget
                             title="Technical Analysis"
                             scriptUrl={`${scriptBaseUrl}technical-analysis.js`}
-                            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(tradingViewSymbol)}
+                            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(normalizedSymbol)}
                             height={450}
                         />
                         <TradingViewWidget
                             title="Company Profile"
                             scriptUrl={`${scriptBaseUrl}symbol-profile.js`}
-                            config={SYMBOL_PROFILE_WIDGET_CONFIG(tradingViewSymbol)}
+                            config={SYMBOL_PROFILE_WIDGET_CONFIG(normalizedSymbol)}
                             height={450}
                         />
                         <TradingViewWidget
                             title="Financials"
                             scriptUrl={`${scriptBaseUrl}financials.js`}
-                            config={FINANCIALS_WIDGET_CONFIG(tradingViewSymbol)}
+                            config={FINANCIALS_WIDGET_CONFIG(normalizedSymbol)}
                             height={540}
                         />
                     </div>

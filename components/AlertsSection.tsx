@@ -53,8 +53,7 @@ const AlertsSection = () => {
     }
 
     return (
-        <div className="h-[600px] w-full  border-zinc-800 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-            <h2 className="text-xl font-bold mb-4 sticky top-0 z-10 py-2 ">Active Alerts</h2>
+        <div className="h-[600px] w-full  border-zinc-800 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
             <div className="grid grid-cols-1 gap-4">
                 {alerts.map((alert, index) => (
                     <AlertCard key={alert._id || index} alert={alert} />

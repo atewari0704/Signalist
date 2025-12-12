@@ -38,7 +38,7 @@ export function DataTable<TData, TValue>({
 
     return (
         <>
-            <div className="rounded-lg border border-gray-600 bg-gray-800 overflow-hidden">
+            <div className="h-[600px] rounded-lg border border-gray-600 bg-gray-800 overflow-y-auto">
                 <Table className="w-full">
                     <TableHeader className="bg-gray-700">
                         {table.getHeaderGroups().map((headerGroup) => (

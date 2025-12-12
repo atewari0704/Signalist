@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { BellIcon } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import TradingViewWidget from "@/components/TradingViewWidget"
 import { SINGLE_TICKER_WIDGET_CONFIG, SYMBOL_INFO_WIDGET_CONFIG } from "@/lib/constants"
@@ -15,6 +15,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { MARKET_OVERVIEW_WIDGET_CONFIG } from "@/lib/constants"
 import { addStockAlert } from "@/lib/actions/alerts.actions"
+import { Command, CommandInput } from "@/components/ui/command"
+import { searchStocks } from '@/lib/actions/finnhub.actions';
+// import { StockWithWatchlistStatus } from '@/lib/types'
 
 
 interface AlertCellProps {
@@ -27,6 +30,8 @@ export const AlertCell = ({ symbol }: AlertCellProps) => {
     const [price, setPrice] = useState("")
     const [direction, setDirection] = useState<"above" | "below">("above")
     const [open, setOpen] = useState(false)
+    const [alertSymbol, setAlertSymbol] = useState(symbol)
+    const [alertStockInfo, setAlertStockInfo] = useState<StockWithWatchlistStatus[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const scriptUrl = `https://s3.tradingview.com/external-embedding/embed-widget-`;
 
@@ -49,6 +54,26 @@ export const AlertCell = ({ symbol }: AlertCellProps) => {
         }
     }
 
+
+
+    useEffect(() => {
+        const getAlertStockInfo = async () => {
+            const alertStockInfo = await searchStocks(alertSymbol)
+            setAlertStockInfo(alertStockInfo)
+            console.log(alertStockInfo)
+        }
+
+        try {
+            getAlertStockInfo()
+        } catch (error) {
+            console.error("Failed to get alert stock info:", error)
+        }
+
+    }, [alertSymbol])
+
+
+
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -63,6 +88,16 @@ export const AlertCell = ({ symbol }: AlertCellProps) => {
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[650px] bg-[#0A0A0A] border-gray-800 text-white p-6 gap-6">
+
+                <Command className="bg-transparent">
+                    <CommandInput placeholder="Type a command or search..." value={alertSymbol} onValueChange={setAlertSymbol} />
+                </Command>
+
+                {alertSymbol && (<h2>{alertSymbol}</h2>)}
+
+
+
+
                 <DialogTitle className="text-xl font-semibold tracking-tight">Set Price Alert for {symbol}</DialogTitle>
 
                 <TradingViewWidget
