@@ -54,6 +54,7 @@ declare global {
 
     type MarketNewsArticle = {
         id: number;
+        symbol?: string; //symbol of the stock the news is optional
         headline: string;
         summary: string;
         source: string;
@@ -289,4 +290,4 @@ declare global {
 
 }
 
-export {};
+export { };

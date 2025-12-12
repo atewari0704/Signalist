@@ -1,7 +1,7 @@
 export const NAV_ITEMS = [
     { href: '/', label: 'Dashboard' },
     { href: '/search', label: 'Search' },
-    // { href: '/watchlist', label: 'Watchlist' },
+    { href: '/watchlist', label: 'Watchlist' },
 ];
 
 // Sign-up form select options
@@ -104,6 +104,15 @@ export const FINANCIALS_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
     width: '100%',
     height: 540,
 });
+
+
+export const SINGLE_TICKER_WIDGET_CONFIG = (symbol = 'NASDAQ:AAPL') => ({
+    symbol,
+    colorTheme: "dark",
+    isTransparent: true,
+    locale: "en",
+    width: "100%"
+})
 
 
 export const TICKER_TAPE_WIDGET_CONFIG = {
