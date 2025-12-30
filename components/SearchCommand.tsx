@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { searchStocks } from '@/lib/actions/finnhub.actions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from 'sonner';
-import { addToMyWatchlist, getMyWatchlistStatus, removeFromMyWatchlist, getMyWatchlistSymbols } from '@/lib/actions/watchlist.actions'
+import { addToMyWatchlist, getMyWatchlistStatus, removeFromMyWatchlist, getMyWatchlistSymbols, addToMyWatchlistSpringBoot } from '@/lib/actions/watchlist.actions'
 
 type WatchlistLookup = Record<string, boolean>;
 
@@ -170,7 +170,7 @@ export default function SearchCommand({
             if (currentlyInWatchlist) {
                 await removeFromMyWatchlist(symbol);
             } else {
-                await addToMyWatchlist(symbol, stock.name);
+                await addToMyWatchlistSpringBoot(symbol, stock.name);
             }
 
             const nextLookup: WatchlistLookup = { ...watchlistLookup };

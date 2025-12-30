@@ -1,6 +1,6 @@
 "use client"
 
-import { getMyWatchlistSymbols, removeFromMyWatchlist } from '@/lib/actions/watchlist.actions'
+import { getMyWatchlistSymbols, getWatchlistSymbolsByEmailSpringBoot, getWatchlistSymbolsSpringBoot, removeFromMyWatchlist, removeStockFromWatchListSpringBoot } from '@/lib/actions/watchlist.actions'
 import React, { useEffect, useState } from 'react'
 import { Loader2, Star } from 'lucide-react'
 import { toast } from 'sonner';
@@ -30,10 +30,13 @@ const WatchlistPage = () => {
                 setLoading(true)
 
                 // 1. Fetch symbols first
-                // 1. Fetch symbols first
-                const symbolData = await getMyWatchlistSymbols()
+                const symbolData = await getWatchlistSymbolsSpringBoot()
                 setSymbols(symbolData)
-                console.log("Fetched symbols:", symbolData)
+                console.log("FROM SPRING BOOT", symbolData)
+
+                //// This was the old way where we did NOT use spring boot
+                // const symbolData = await getMyWatchlistSymbols()
+                // setSymbols(symbolData)
 
                 // 2. Use the data DIRECTLY to fetch profiles (no waiting for state)
                 // We use Promise.all to fetch all profiles in parallel
@@ -73,7 +76,9 @@ const WatchlistPage = () => {
         await new Promise(resolve => setTimeout(resolve, 500))
 
         try {
-            await removeFromMyWatchlist(symbol)
+            const res = await removeStockFromWatchListSpringBoot(symbol)
+            console.log("SpringBoot watchlist updated", res)
+            // await removeFromMyWatchlist(symbol)
 
             // Toast saying symbol removed from watchlist
             toast.success(`${symbol} removed from watchlist`)

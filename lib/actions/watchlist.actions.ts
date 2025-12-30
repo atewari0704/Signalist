@@ -5,6 +5,80 @@ import { Watchlist } from "@/database/models/watchlist.model";
 import { auth } from "@/lib/better-auth/auth";
 import { headers } from "next/headers";
 
+
+/**
+ * Trying to get watchlist symbols based on a user's email BUT using spring boot backend
+ */
+export const getWatchlistSymbolsSpringBoot = async (): Promise<string[]> => {
+    try {
+        const session = await auth.api.getSession({ headers: await headers() });
+
+        if (!session?.user?.id) return [];
+
+        const response = await fetch(`http://localhost:8080/watchlist/${session.user.id}`);
+        const symbols: string[] = await response.json();
+        return symbols;
+    }
+    catch (error) {
+        console.error('Error fetching watchlist symbols:', error);
+        return [];
+    }
+};
+
+
+export const addToMyWatchlistSpringBoot = async (symbol: string, company: string) => {
+    try {
+        const session = await auth.api.getSession({ headers: await headers() });
+
+        if (!session?.user?.id) return false;
+
+        //is a boolean response
+        const response = await fetch(`http://localhost:8080/watchlist/addStock`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userId: session.user.id,
+                symbol: symbol,
+                company: company,
+            }),
+        });
+
+        const success: boolean = await response.json();
+
+        console.log("AddToWatchlist VIA SPRING BOOT", success);
+
+        return success;
+    }
+    catch (error) {
+        console.error('Error fetching watchlist symbols:', error);
+        return false;
+    }
+};
+
+
+export const removeStockFromWatchListSpringBoot = async (symbol: string) => {
+    try {
+        const session = await auth.api.getSession({ headers: await headers() });
+
+        if (!session?.user?.id) return [];
+
+        //is a boolean response
+        const response = await fetch(`http://localhost:8080/watchlist/${session.user.id}/${symbol}`, {
+            method: 'DELETE',
+        });
+
+        const success: boolean = await response.json();
+
+        return success;
+    }
+    catch (error) {
+        console.error('Error fetching watchlist symbols:', error);
+        return [];
+    }
+};
+
 /**
  * Get watchlist symbols for a user by their email
  * @param email - User's email address
