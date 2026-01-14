@@ -5,11 +5,9 @@ import { Alert, AlertItem } from "@/database/models/alert.model";
 import { auth } from "../better-auth/auth";
 import { headers } from "next/headers";
 
-/**
- * Get all alerts for a specific user.
- * Each alert contains the stock symbol and condition.
- */
-export const getStocksWithAlerts = async (): Promise<AlertItem[]> => {
+
+
+export const getAlertsSpringBoot = async (): Promise<AlertItem[]> => {
     try {
         const session = await auth.api.getSession({
             headers: await headers() // Ensure headers are awaited properly
@@ -20,21 +18,21 @@ export const getStocksWithAlerts = async (): Promise<AlertItem[]> => {
             return [];
         }
 
-        await connectToDatabase();
+        const response = await fetch(`http://localhost:8080/alerts/${session.user.id}`, { method: "GET" });
 
-        const userAlerts = await Alert.findOne({ userId: session.user.id });
-
-        if (!userAlerts || !userAlerts.alerts) {
-            return [];
+        if (!response.ok) {
+            throw new Error("Failed to fetch alerts");
         }
 
-        // Serialize to ensure plain objects are returned to client components
-        return JSON.parse(JSON.stringify(userAlerts.alerts));
-    } catch (error) {
+        const data = await response.json();
+        return data;
+    }
+    catch (error) {
         console.error("Error fetching user alerts:", error);
         return [];
     }
 };
+
 
 type AlertParams = {
     symbol: string;
@@ -42,15 +40,7 @@ type AlertParams = {
     condition: 'ABOVE' | 'BELOW';
 };
 
-
-/**
- * Add a new alert for a specific stock.
- * @param symbol - The stock symbol to add an alert for.
- * @param targetPrice - The target price for the alert.
- * @param condition - The condition for the alert (e.g., "ABOVE" or "BELOW").
- * @returns The updated user alerts object.
- */
-export const addStockAlert = async ({
+export const addAlertSpringBoot = async ({
     symbol,
     targetPrice,
     condition,
@@ -64,35 +54,151 @@ export const addStockAlert = async ({
             throw new Error("Unauthorized");
         }
 
-        if (!symbol) {
-            throw new Error('Symbol is required');
+        const response = await fetch(`http://localhost:8080/alerts/addAlert`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                userId: session.user.id,
+                symbol,
+                targetPrice,
+                condition,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to add alert to Spring Boot backend");
         }
 
-        await connectToDatabase();
-
-        const newAlert: AlertItem = {
-            symbol: symbol,
-            targetPrice,
-            condition,
-            status: 'ACTIVE',
-            createdAt: new Date(),
-        };
-
-        const updated = await Alert.findOneAndUpdate(
-            { userId: session.user.id },
-            {
-                $push: { alerts: newAlert },
-                $setOnInsert: { userId: session.user.id }, // Ensure userId is set on insert
-            },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-
-        return JSON.parse(JSON.stringify(updated.alerts));
+        const data = await response.json();
+        return data;
     } catch (error) {
-        console.error('Error adding stock alert:', error);
-        throw error; // Re-throw to handle in UI
+        console.error("Error adding alert to Spring Boot:", error);
+        throw error;
     }
 };
+
+
+/**
+ * Remove an alert for the current user from the Spring Boot backend using its ID.
+ * @param alertId - The unique identifier of the alert to remove.
+ * @returns The response from the Spring Boot backend.
+ */
+export const removeAlertSpringBoot = async (alertId: string) => {
+    try {
+        const session = await auth.api.getSession({
+            headers: await headers()
+        });
+
+        if (!session?.user?.id) {
+            throw new Error("Unauthorized");
+        }
+
+        const response = await fetch(`http://localhost:8080/alerts/${session.user.id}/${alertId}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to remove alert from Spring Boot backend");
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error removing alert from Spring Boot:", error);
+        throw error;
+    }
+}
+/**
+ * Get all alerts for a specific user.
+ * Each alert contains the stock symbol and condition.
+ */
+// export const getStocksWithAlerts = async (): Promise<AlertItem[]> => {
+//     try {
+//         const session = await auth.api.getSession({
+//             headers: await headers() // Ensure headers are awaited properly
+//         });
+
+//         if (!session?.user?.id) {
+//             console.error("No userId provided to getStocksWithAlerts");
+//             return [];
+//         }
+
+//         await connectToDatabase();
+
+//         const userAlerts = await Alert.findOne({ userId: session.user.id });
+
+//         if (!userAlerts || !userAlerts.alerts) {
+//             return [];
+//         }
+
+//         // Serialize to ensure plain objects are returned to client components
+//         return JSON.parse(JSON.stringify(userAlerts.alerts));
+//     } catch (error) {
+//         console.error("Error fetching user alerts:", error);
+//         return [];
+//     }
+// };
+
+
+
+
+
+
+
+
+
+/**
+ * Add a new alert for a specific stock.
+ * @param symbol - The stock symbol to add an alert for.
+ * @param targetPrice - The target price for the alert.
+ * @param condition - The condition for the alert (e.g., "ABOVE" or "BELOW").
+ * @returns The updated user alerts object.
+ */
+// export const addStockAlert = async ({
+//     symbol,
+//     targetPrice,
+//     condition,
+// }: AlertParams) => {
+//     try {
+//         const session = await auth.api.getSession({
+//             headers: await headers()
+//         });
+
+//         if (!session?.user?.id) {
+//             throw new Error("Unauthorized");
+//         }
+
+//         if (!symbol) {
+//             throw new Error('Symbol is required');
+//         }
+
+//         await connectToDatabase();
+
+//         const newAlert: AlertItem = {
+//             symbol: symbol,
+//             targetPrice,
+//             condition,
+//             status: 'ACTIVE',
+//             createdAt: new Date(),
+//         };
+
+//         const updated = await Alert.findOneAndUpdate(
+//             { userId: session.user.id },
+//             {
+//                 $push: { alerts: newAlert },
+//                 $setOnInsert: { userId: session.user.id }, // Ensure userId is set on insert
+//             },
+//             { upsert: true, new: true, setDefaultsOnInsert: true }
+//         );
+
+//         return JSON.parse(JSON.stringify(updated.alerts));
+//     } catch (error) {
+//         console.error('Error adding stock alert:', error);
+//         throw error; // Re-throw to handle in UI
+//     }
+// };
 
 
 /**
@@ -103,47 +209,47 @@ export const addStockAlert = async ({
  * @param condition - The condition for the alert (e.g., "ABOVE" or "BELOW").
  * @returns The updated user alerts object.
  */
-export const removeStockAlert = async ({
-    symbol,
-    targetPrice,
-    condition,
-}: AlertParams) => {
-    try {
-        const session = await auth.api.getSession({
-            headers: await headers()
-        });
+// export const removeStockAlert = async ({
+//     symbol,
+//     targetPrice,
+//     condition,
+// }: AlertParams) => {
+//     try {
+//         const session = await auth.api.getSession({
+//             headers: await headers()
+//         });
 
-        if (!session?.user?.id) {
-            throw new Error("Unauthorized");
-        }
+//         if (!session?.user?.id) {
+//             throw new Error("Unauthorized");
+//         }
 
-        if (!symbol) {
-            throw new Error('Symbol is required');
-        }
+//         if (!symbol) {
+//             throw new Error('Symbol is required');
+//         }
 
-        await connectToDatabase();
+//         await connectToDatabase();
 
-        const updated = await Alert.findOneAndUpdate(
-            { userId: session.user.id },
-            {
-                $pull: {
-                    alerts: {
-                        symbol: symbol,
-                        targetPrice: targetPrice,
-                        condition: condition,
-                    },
-                },
-            },
-            { new: true }
-        );
+//         const updated = await Alert.findOneAndUpdate(
+//             { userId: session.user.id },
+//             {
+//                 $pull: {
+//                     alerts: {
+//                         symbol: symbol,
+//                         targetPrice: targetPrice,
+//                         condition: condition,
+//                     },
+//                 },
+//             },
+//             { new: true }
+//         );
 
-        if (!updated) {
-            return [];
-        }
+//         if (!updated) {
+//             return [];
+//         }
 
-        return JSON.parse(JSON.stringify(updated.alerts));
-    } catch (error) {
-        console.error('Error removing stock alert:', error);
-        throw error;
-    }
-};
+//         return JSON.parse(JSON.stringify(updated.alerts));
+//     } catch (error) {
+//         console.error('Error removing stock alert:', error);
+//         throw error;
+//     }
+// };

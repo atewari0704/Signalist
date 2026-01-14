@@ -7,7 +7,7 @@ export interface AlertItem {
     status: 'ACTIVE' | 'TRIGGERED';
     createdAt: Date;
     triggeredAt?: Date;
-    _id?: string; // Subdocument ID
+    id: string; // the java object gives back id but in MongoDB it is _id
 }
 
 export interface UserAlerts extends Document {

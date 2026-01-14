@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getStocksWithAlerts } from "@/lib/actions/alerts.actions";
+import { getAlertsSpringBoot } from "@/lib/actions/alerts.actions";
 import { AlertItem } from "@/database/models/alert.model";
 import AlertCard from "./AlertCard";
 import { Loader2 } from "lucide-react";
@@ -15,7 +15,9 @@ const AlertsSection = () => {
         const fetchAlerts = async () => {
             try {
                 setLoading(true);
-                const data = await getStocksWithAlerts();
+                const data = await getAlertsSpringBoot();
+                // const data = await getStocksWithAlerts();
+                console.log("getAlertsSpringBoot(): ", data);
                 setAlerts(data);
             } catch (err) {
                 console.error("Failed to fetch alerts:", err);
@@ -56,7 +58,7 @@ const AlertsSection = () => {
         <div className="h-[600px] w-full  border-zinc-800 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
             <div className="grid grid-cols-1 gap-4">
                 {alerts.map((alert, index) => (
-                    <AlertCard key={alert._id || index} alert={alert} />
+                    <AlertCard key={alert.id || index} alert={alert} />
                 ))}
             </div>
         </div>
