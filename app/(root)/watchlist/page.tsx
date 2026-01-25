@@ -32,11 +32,7 @@ const WatchlistPage = () => {
                 // 1. Fetch symbols first
                 const symbolData = await getWatchlistSymbolsSpringBoot()
                 setSymbols(symbolData)
-<<<<<<< HEAD
                 
-=======
-                console.log("should be using render backend at",process.env.BACKEND_URL)
->>>>>>> a5c6e57 (testing)
                 // 2. Use the data DIRECTLY to fetch profiles (no waiting for state)
                 // We use Promise.all to fetch all profiles in parallel
                 const profilePromises = symbolData.map(symbol => getStockProfile(symbol))
