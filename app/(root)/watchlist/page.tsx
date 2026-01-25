@@ -1,6 +1,6 @@
 "use client"
 
-import { getMyWatchlistSymbols, removeFromMyWatchlist } from '@/lib/actions/watchlist.actions'
+import {getWatchlistSymbolsSpringBoot,removeStockFromWatchListSpringBoot } from '@/lib/actions/watchlist.actions'
 import React, { useEffect, useState } from 'react'
 import { Loader2, Star } from 'lucide-react'
 import { toast } from 'sonner';
@@ -30,11 +30,9 @@ const WatchlistPage = () => {
                 setLoading(true)
 
                 // 1. Fetch symbols first
-                // 1. Fetch symbols first
-                const symbolData = await getMyWatchlistSymbols()
+                const symbolData = await getWatchlistSymbolsSpringBoot()
                 setSymbols(symbolData)
-                console.log("Fetched symbols:", symbolData)
-
+                
                 // 2. Use the data DIRECTLY to fetch profiles (no waiting for state)
                 // We use Promise.all to fetch all profiles in parallel
                 const profilePromises = symbolData.map(symbol => getStockProfile(symbol))
@@ -73,7 +71,9 @@ const WatchlistPage = () => {
         await new Promise(resolve => setTimeout(resolve, 500))
 
         try {
-            await removeFromMyWatchlist(symbol)
+            const res = await removeStockFromWatchListSpringBoot(symbol)
+            console.log("SpringBoot watchlist updated", res)
+            // await removeFromMyWatchlist(symbol)
 
             // Toast saying symbol removed from watchlist
             toast.success(`${symbol} removed from watchlist`)
@@ -88,7 +88,7 @@ const WatchlistPage = () => {
         }
     }
 
-    const removeFromWatchList = async (event: React.MouseEvent<HTMLButtonElement>, symbol: string) => {
+const removeFromWatchList = async (event: React.MouseEvent<HTMLButtonElement>, symbol: string) => {
         event.preventDefault()
         event.stopPropagation()
         await handleRemoveSymbol(symbol)
@@ -134,7 +134,7 @@ const WatchlistPage = () => {
                 <AlertsSection />
             </div>
 
-            {/* Component 3 (Bottom - Full Width) */}
+            {/* The news component */}
             <div className="md:col-span-2 w-full">
                 <StockNews symbols={symbols} />
             </div>

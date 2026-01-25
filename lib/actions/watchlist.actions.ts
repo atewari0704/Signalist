@@ -5,55 +5,152 @@ import { Watchlist } from "@/database/models/watchlist.model";
 import { auth } from "@/lib/better-auth/auth";
 import { headers } from "next/headers";
 
-/**
- * Get watchlist symbols for a user by their email
- * @param email - User's email address
- * @returns Array of stock symbols (strings)
- */
-export const getWatchlistSymbolsByEmail = async (email: string): Promise<string[]> => {
+const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:8080").replace(/\/+$/, "");
+
+
+export const getWatchlistSymbolsSpringBoot = async (): Promise<string[]> => {
     try {
-        // Connect to database
-        const mongoose = await connectToDatabase();
-        const db = mongoose.connection.db;
+        const session = await auth.api.getSession({ headers: await headers() });
 
-        if (!db) {
-            console.error('Failed to connect to database');
-            return [];
-        }
+        if (!session?.user?.id) return [];
 
-        // Find user by email in the user collection (Better Auth)
-        const user = await db.collection('user').findOne(
-            { email },
-            { projection: { id: 1, _id: 1 } }
-        );
-
-        // If no user found, return empty array
-        if (!user) {
-            console.log(`No user found with email: ${email}`);
-            return [];
-        }
-
-        // Get userId (Better Auth uses 'id' field)
-        const userId = user.id || user._id?.toString();
-
-        if (!userId) {
-            console.error('User found but no valid ID');
-            return [];
-        }
-
-        // Query the Watchlist document by userId and return just the symbols
-        const watchlist = await Watchlist.findOne(
-            { userId },
-            { 'items.symbol': 1, _id: 0 }
-        ).lean();
-
-        // Extract symbols as strings
-        return watchlist?.items?.map((item) => item.symbol) ?? [];
-    } catch (error) {
+        const response = await fetch(`${BACKEND_URL}/watchlist/${session.user.id}`);
+        const symbols: string[] = await response.json();
+        return symbols;
+    }
+    catch (error) {
         console.error('Error fetching watchlist symbols:', error);
         return [];
     }
 };
+
+
+export const addToMyWatchlistSpringBoot = async (symbol: string, company: string) => {
+    try {
+        const session = await auth.api.getSession({ headers: await headers() });
+
+        if (!session?.user?.id) return false;
+
+        //is a boolean response
+        const response = await fetch(`${BACKEND_URL}/watchlist/addStock`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userId: session.user.id,
+                symbol: symbol,
+                company: company,
+            }),
+        });
+
+        const success: boolean = await response.json();
+
+        console.log("AddToWatchlist VIA SPRING BOOT", success);
+
+        return success;
+    }
+    catch (error) {
+        console.error('Error fetching watchlist symbols:', error);
+        return false;
+    }
+};
+
+
+export const removeStockFromWatchListSpringBoot = async (symbol: string): Promise<boolean> => {
+    try {
+        const session = await auth.api.getSession({ headers: await headers() });
+
+        if (!session?.user?.id) return false;
+
+        //is a boolean response
+        const response = await fetch(`${BACKEND_URL}/watchlist/${session.user.id}/${symbol}`, {
+            method: 'DELETE',
+        });
+
+        const success: boolean = await response.json();
+
+        return success;
+    }
+    catch (error) {
+        console.error('Error fetching watchlist symbols:', error);
+        return false;
+    }
+};
+
+export const isStockInWatchlistSpringBoot = async (symbol: string): Promise<boolean> => {
+    try {
+        const session = await auth.api.getSession({ headers: await headers() });
+
+        if (!session?.user?.id) return false;
+
+        //is a boolean response
+        const response = await fetch(`${BACKEND_URL}/watchlist/${session.user.id}/${symbol}`, {
+            method: 'GET',
+        });
+
+        const success: boolean = await response.json();
+
+        return success;
+    }
+    catch (error) {
+        console.error('Error fetching watchlist symbols:', error);
+        return false;
+    }
+};
+
+
+
+
+// /**
+//  * Get watchlist symbols for a user by their email
+//  * @param email - User's email address
+//  * @returns Array of stock symbols (strings)
+//  */
+// export const getWatchlistSymbolsByEmail = async (email: string): Promise<string[]> => {
+//     try {
+//         // Connect to database
+//         const mongoose = await connectToDatabase();
+//         const db = mongoose.connection.db;
+
+//         if (!db) {
+//             console.error('Failed to connect to database');
+//             return [];
+//         }
+
+//         // Find user by email in the user collection (Better Auth)
+//         const user = await db.collection('user').findOne(
+//             { email },
+//             { projection: { id: 1, _id: 1 } }
+//         );
+
+//         // If no user found, return empty array
+//         if (!user) {
+//             console.log(`No user found with email: ${email}`);
+//             return [];
+//         }
+
+//         // Get userId (Better Auth uses 'id' field)
+//         const userId = user.id || user._id?.toString();
+
+//         if (!userId) {
+//             console.error('User found but no valid ID');
+//             return [];
+//         }
+
+//         // Query the Watchlist document by userId and return just the symbols
+//         const watchlist = await Watchlist.findOne(
+//             { userId },
+//             { 'items.symbol': 1, _id: 0 }
+//         ).lean();
+
+//         // Extract symbols as strings
+//         return watchlist?.items?.map((item) => item.symbol) ?? [];
+//     } catch (error) {
+//         console.error('Error fetching watchlist symbols:', error);
+//         return [];
+//     }
+// };
 
 type ModifyWatchlistParams = {
     userId: string;
@@ -78,156 +175,158 @@ export const isStockInWatchlist = async ({ userId, symbol }: ModifyWatchlistPara
     return Boolean(existing);
 };
 
-export const addStockToWatchlist = async ({
-    userId,
-    symbol,
-    company,
-}: AddToWatchlistParams) => {
-    const trimmedSymbol = symbol?.trim().toUpperCase();
-    const trimmedCompany = company?.trim();
-
-    if (!trimmedSymbol) {
-        throw new Error('Symbol is required');
-    }
-
-    if (!trimmedCompany) {
-        throw new Error('Company name is required');
-    }
-
-    await connectToDatabase();
-
-    const now = new Date();
-
-    // Try to update existing entry first
-    const updateExisting = await Watchlist.updateOne(
-        { userId, 'items.symbol': trimmedSymbol },
-        {
-            $set: {
-                'items.$.company': trimmedCompany,
-                'items.$.addedAt': now,
-            },
-        }
-    );
-
-    if (updateExisting.matchedCount > 0) {
-        return;
-    }
-
-    try {
-        await Watchlist.findOneAndUpdate(
-            { userId },
-            {
-                $setOnInsert: { userId },
-                $push: {
-                    items: {
-                        symbol: trimmedSymbol,
-                        company: trimmedCompany,
-                        addedAt: now,
-                    },
-                },
-            },
-            { upsert: true, new: true, setDefaultsOnInsert: true },
-        );
-    } catch (error: any) {
-        // Handle race condition where the symbol was inserted by another request
-        if (error?.code === 11000) {
-            await Watchlist.updateOne(
-                { userId, 'items.symbol': trimmedSymbol },
-                {
-                    $set: {
-                        'items.$.company': trimmedCompany,
-                        'items.$.addedAt': now,
-                    },
-                }
-            );
-            return;
-        }
-
-        throw error;
-    }
-};
-
-export const removeStockFromWatchlist = async ({ userId, symbol }: ModifyWatchlistParams) => {
-    const trimmedSymbol = symbol?.trim().toUpperCase();
-
-    if (!trimmedSymbol) {
-        throw new Error('Symbol is required');
-    }
-
-    await connectToDatabase();
-
-    await Watchlist.updateOne(
-        { userId },
-        {
-            $pull: {
-                items: { symbol: trimmedSymbol },
-            },
-        }
-    );
-};
 
 
-export const getMyWatchlistSymbols = async (): Promise<string[]> => {
-    try {
-        const session = await auth.api.getSession({
-            headers: await headers() // await headers() is required in newer next.js versions, safe to await
-        });
+// export const addStockToWatchlist = async ({
+//     userId,
+//     symbol,
+//     company,
+// }: AddToWatchlistParams) => {
+//     const trimmedSymbol = symbol?.trim().toUpperCase();
+//     const trimmedCompany = company?.trim();
 
-        if (!session?.user?.email) {
-            return [];
-        }
+//     if (!trimmedSymbol) {
+//         throw new Error('Symbol is required');
+//     }
 
-        return await getWatchlistSymbolsByEmail(session.user.email);
-    } catch (error) {
-        console.error("Failed to fetch my watchlist symbols", error);
-        return [];
-    }
-}
+//     if (!trimmedCompany) {
+//         throw new Error('Company name is required');
+//     }
 
-export const removeFromMyWatchlist = async (symbol: string) => {
-    try {
-        const session = await auth.api.getSession({
-            headers: await headers()
-        });
+//     await connectToDatabase();
 
-        if (!session?.user?.id) {
-            throw new Error("Unauthorized");
-        }
+//     const now = new Date();
 
-        await removeStockFromWatchlist({
-            userId: session.user.id,
-            symbol
-        });
+//     // Try to update existing entry first
+//     const updateExisting = await Watchlist.updateOne(
+//         { userId, 'items.symbol': trimmedSymbol },
+//         {
+//             $set: {
+//                 'items.$.company': trimmedCompany,
+//                 'items.$.addedAt': now,
+//             },
+//         }
+//     );
 
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to remove from watchlist", error);
-        throw error;
-    }
-}
+//     if (updateExisting.matchedCount > 0) {
+//         return;
+//     }
 
-export const addToMyWatchlist = async (symbol: string, company: string) => {
-    try {
-        const session = await auth.api.getSession({
-            headers: await headers()
-        });
+//     try {
+//         await Watchlist.findOneAndUpdate(
+//             { userId },
+//             {
+//                 $setOnInsert: { userId },
+//                 $push: {
+//                     items: {
+//                         symbol: trimmedSymbol,
+//                         company: trimmedCompany,
+//                         addedAt: now,
+//                     },
+//                 },
+//             },
+//             { upsert: true, new: true, setDefaultsOnInsert: true },
+//         );
+//     } catch (error: any) {
+//         // Handle race condition where the symbol was inserted by another request
+//         if (error?.code === 11000) {
+//             await Watchlist.updateOne(
+//                 { userId, 'items.symbol': trimmedSymbol },
+//                 {
+//                     $set: {
+//                         'items.$.company': trimmedCompany,
+//                         'items.$.addedAt': now,
+//                     },
+//                 }
+//             );
+//             return;
+//         }
 
-        if (!session?.user?.id) {
-            throw new Error("Unauthorized");
-        }
+//         throw error;
+//     }
+// };
 
-        await addStockToWatchlist({
-            userId: session.user.id,
-            symbol,
-            company
-        });
+// export const removeStockFromWatchlist = async ({ userId, symbol }: ModifyWatchlistParams) => {
+//     const trimmedSymbol = symbol?.trim().toUpperCase();
 
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to add to watchlist", error);
-        throw error;
-    }
-}
+//     if (!trimmedSymbol) {
+//         throw new Error('Symbol is required');
+//     }
+
+//     await connectToDatabase();
+
+//     await Watchlist.updateOne(
+//         { userId },
+//         {
+//             $pull: {
+//                 items: { symbol: trimmedSymbol },
+//             },
+//         }
+//     );
+// };
+
+
+// export const getMyWatchlistSymbols = async (): Promise<string[]> => {
+//     try {
+//         const session = await auth.api.getSession({
+//             headers: await headers() // await headers() is required in newer next.js versions, safe to await
+//         });
+
+//         if (!session?.user?.email) {
+//             return [];
+//         }
+
+//         return await getWatchlistSymbolsByEmail(session.user.email);
+//     } catch (error) {
+//         console.error("Failed to fetch my watchlist symbols", error);
+//         return [];
+//     }
+// }
+
+// export const removeFromMyWatchlist = async (symbol: string) => {
+//     try {
+//         const session = await auth.api.getSession({
+//             headers: await headers()
+//         });
+
+//         if (!session?.user?.id) {
+//             throw new Error("Unauthorized");
+//         }
+
+//         await removeStockFromWatchlist({
+//             userId: session.user.id,
+//             symbol
+//         });
+
+//         return { success: true };
+//     } catch (error) {
+//         console.error("Failed to remove from watchlist", error);
+//         throw error;
+//     }
+// }
+
+// export const addToMyWatchlist = async (symbol: string, company: string) => {
+//     try {
+//         const session = await auth.api.getSession({
+//             headers: await headers()
+//         });
+
+//         if (!session?.user?.id) {
+//             throw new Error("Unauthorized");
+//         }
+
+//         await addStockToWatchlist({
+//             userId: session.user.id,
+//             symbol,
+//             company
+//         });
+
+//         return { success: true };
+//     } catch (error) {
+//         console.error("Failed to add to watchlist", error);
+//         throw error;
+//     }
+// }
 
 export const getMyWatchlistStatus = async (symbol: string) => {
     try {

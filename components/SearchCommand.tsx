@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { searchStocks } from '@/lib/actions/finnhub.actions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from 'sonner';
-import { addToMyWatchlist, getMyWatchlistStatus, removeFromMyWatchlist, getMyWatchlistSymbols } from '@/lib/actions/watchlist.actions'
+import { removeStockFromWatchListSpringBoot, addToMyWatchlistSpringBoot, isStockInWatchlistSpringBoot, getWatchlistSymbolsSpringBoot } from '@/lib/actions/watchlist.actions'
 
 type WatchlistLookup = Record<string, boolean>;
 
@@ -90,7 +90,7 @@ export default function SearchCommand({
 
         const refreshWatchlistStatus = async () => {
             try {
-                const symbols = await getMyWatchlistSymbols();
+                const symbols = await getWatchlistSymbolsSpringBoot();
                 const newLookup: WatchlistLookup = {};
                 symbols.forEach((symbol) => {
                     newLookup[normalizeSymbol(symbol)] = true;
@@ -165,12 +165,12 @@ export default function SearchCommand({
         setPendingSymbol(symbol);
 
         try {
-            const { isInWatchlist: currentlyInWatchlist } = await getMyWatchlistStatus(symbol);
+            const currentlyInWatchlist = await isStockInWatchlistSpringBoot(symbol);
 
             if (currentlyInWatchlist) {
-                await removeFromMyWatchlist(symbol);
+                await removeStockFromWatchListSpringBoot(symbol);
             } else {
-                await addToMyWatchlist(symbol, stock.name);
+                await addToMyWatchlistSpringBoot(symbol, stock.name);
             }
 
             const nextLookup: WatchlistLookup = { ...watchlistLookup };

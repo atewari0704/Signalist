@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { MARKET_OVERVIEW_WIDGET_CONFIG } from "@/lib/constants"
-import { addStockAlert } from "@/lib/actions/alerts.actions"
+import { addAlertSpringBoot, addStockAlert } from "@/lib/actions/alerts.actions"
 import { Command, CommandInput } from "@/components/ui/command"
 import { searchStocks } from '@/lib/actions/finnhub.actions';
 // import { StockWithWatchlistStatus } from '@/lib/types'
@@ -40,7 +40,8 @@ export const AlertCell = ({ symbol }: AlertCellProps) => {
 
         try {
             setIsLoading(true)
-            await addStockAlert({
+            // was intially using addStockAlert but moved logic to springboot
+            await addAlertSpringBoot({
                 symbol,
                 targetPrice: Number(price),
                 condition: direction === "above" ? "ABOVE" : "BELOW"
@@ -92,12 +93,6 @@ export const AlertCell = ({ symbol }: AlertCellProps) => {
                 <Command className="bg-transparent">
                     <CommandInput placeholder="Type a command or search..." value={alertSymbol} onValueChange={setAlertSymbol} />
                 </Command>
-
-                {alertSymbol && (<h2>{alertSymbol}</h2>)}
-
-
-
-
                 <DialogTitle className="text-xl font-semibold tracking-tight">Set Price Alert for {symbol}</DialogTitle>
 
                 <TradingViewWidget

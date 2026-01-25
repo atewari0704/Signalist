@@ -6,7 +6,7 @@ import TradingViewWidget from "@/components/TradingViewWidget";
 import { SINGLE_TICKER_WIDGET_CONFIG, SYMBOL_INFO_WIDGET_CONFIG } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
-import { removeStockAlert } from "@/lib/actions/alerts.actions";
+import { removeAlertSpringBoot } from "@/lib/actions/alerts.actions";
 import { toast } from "sonner";
 
 interface AlertCardProps {
@@ -18,11 +18,8 @@ const AlertCard = ({ alert }: AlertCardProps) => {
 
     const handleDelete = async () => {
         try {
-            await removeStockAlert({
-                symbol: alert.symbol,
-                targetPrice: alert.targetPrice,
-                condition: alert.condition
-            });
+
+            await removeAlertSpringBoot(alert.id);
             toast.success("Alert removed successfully");
         } catch (error) {
             console.error("Failed to remove alert:", error);
