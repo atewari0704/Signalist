@@ -5,6 +5,7 @@ import { Watchlist } from "@/database/models/watchlist.model";
 import { auth } from "@/lib/better-auth/auth";
 import { headers } from "next/headers";
 
+const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 
 export const getWatchlistSymbolsSpringBoot = async (): Promise<string[]> => {
@@ -13,7 +14,7 @@ export const getWatchlistSymbolsSpringBoot = async (): Promise<string[]> => {
 
         if (!session?.user?.id) return [];
 
-        const response = await fetch(`http://localhost:8080/watchlist/${session.user.id}`);
+        const response = await fetch(`${BACKEND_URL}/watchlist/${session.user.id}`);
         const symbols: string[] = await response.json();
         return symbols;
     }
@@ -31,7 +32,7 @@ export const addToMyWatchlistSpringBoot = async (symbol: string, company: string
         if (!session?.user?.id) return false;
 
         //is a boolean response
-        const response = await fetch(`http://localhost:8080/watchlist/addStock`, {
+        const response = await fetch(`${BACKEND_URL}/watchlist/addStock`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -63,7 +64,7 @@ export const removeStockFromWatchListSpringBoot = async (symbol: string): Promis
         if (!session?.user?.id) return false;
 
         //is a boolean response
-        const response = await fetch(`http://localhost:8080/watchlist/${session.user.id}/${symbol}`, {
+        const response = await fetch(`${BACKEND_URL}/watchlist/${session.user.id}/${symbol}`, {
             method: 'DELETE',
         });
 
@@ -84,7 +85,7 @@ export const isStockInWatchlistSpringBoot = async (symbol: string): Promise<bool
         if (!session?.user?.id) return false;
 
         //is a boolean response
-        const response = await fetch(`http://localhost:8080/watchlist/${session.user.id}/${symbol}`, {
+        const response = await fetch(`${BACKEND_URL}/watchlist/${session.user.id}/${symbol}`, {
             method: 'GET',
         });
 

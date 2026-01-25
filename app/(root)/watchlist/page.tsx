@@ -1,6 +1,6 @@
 "use client"
 
-import { getMyWatchlistSymbols, getWatchlistSymbolsByEmailSpringBoot, getWatchlistSymbolsSpringBoot, removeFromMyWatchlist, removeStockFromWatchListSpringBoot } from '@/lib/actions/watchlist.actions'
+import {getWatchlistSymbolsSpringBoot,removeStockFromWatchListSpringBoot } from '@/lib/actions/watchlist.actions'
 import React, { useEffect, useState } from 'react'
 import { Loader2, Star } from 'lucide-react'
 import { toast } from 'sonner';
@@ -93,7 +93,7 @@ const WatchlistPage = () => {
         }
     }
 
-    const removeFromWatchList = async (event: React.MouseEvent<HTMLButtonElement>, symbol: string) => {
+const removeFromWatchList = async (event: React.MouseEvent<HTMLButtonElement>, symbol: string) => {
         event.preventDefault()
         event.stopPropagation()
         await handleRemoveSymbol(symbol)
@@ -139,7 +139,7 @@ const WatchlistPage = () => {
                 <AlertsSection />
             </div>
 
-            {/* Component 3 (Bottom - Full Width) */}
+            {/* The news component */}
             <div className="md:col-span-2 w-full">
                 <StockNews symbols={symbols} />
             </div>

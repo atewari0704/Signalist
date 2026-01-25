@@ -1,11 +1,10 @@
 "use server";
 
-import { connectToDatabase } from "@/database/mongoose";
-import { Alert, AlertItem } from "@/database/models/alert.model";
+import { AlertItem } from "@/database/models/alert.model";
 import { auth } from "../better-auth/auth";
 import { headers } from "next/headers";
 
-
+const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 export const getAlertsSpringBoot = async (): Promise<AlertItem[]> => {
     try {
@@ -18,7 +17,8 @@ export const getAlertsSpringBoot = async (): Promise<AlertItem[]> => {
             return [];
         }
 
-        const response = await fetch(`http://localhost:8080/alerts/${session.user.id}`, { method: "GET" });
+
+        const response = await fetch(`${BACKEND_URL}/alerts/${session.user.id}`, { method: "GET" });
 
         if (!response.ok) {
             throw new Error("Failed to fetch alerts");
@@ -54,7 +54,7 @@ export const addAlertSpringBoot = async ({
             throw new Error("Unauthorized");
         }
 
-        const response = await fetch(`http://localhost:8080/alerts/addAlert`, {
+        const response = await fetch(`${BACKEND_URL}/alerts/addAlert`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -95,7 +95,7 @@ export const removeAlertSpringBoot = async (alertId: string) => {
             throw new Error("Unauthorized");
         }
 
-        const response = await fetch(`http://localhost:8080/alerts/${session.user.id}/${alertId}`, {
+        const response = await fetch(`${BACKEND_URL}/alerts/${session.user.id}/${alertId}`, {
             method: "DELETE"
         });
 
