@@ -15,9 +15,7 @@ const AlertsSection = () => {
         const fetchAlerts = async () => {
             try {
                 setLoading(true);
-                console.log("should be using render backend at",process.env.BACKEND_URL)
                 const data = await getAlertsSpringBoot();
-                // const data = await getStocksWithAlerts();
                 console.log("getAlertsSpringBoot(): ", data);
                 setAlerts(data);
             } catch (err) {
