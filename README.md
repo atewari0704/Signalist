@@ -8,10 +8,11 @@ The app uses a Java SpringBoot backend which can be found [here](https://github.
 
 This frontend is deployed on Vercel while the backend is deployed on Render. Render's free tier make the backend inactive if it doesn't get a request very frequently. If you do access the frontend via Vercel ut may take sometime for the backend on Render to be back up and running.
 
-Here a few screenshots of what the app looks like
-
 [Vercel Frontend](https://stock-tracker-app-pink.vercel.app/)
+
 [Render Backend](https://signalistbackend.onrender.com)
+
+Here a few screenshots of what the app looks like
 
 ### Dashboard 
 ![dashbord page](images/dashboard.png)
